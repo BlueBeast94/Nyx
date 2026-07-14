@@ -1,0 +1,218 @@
+@font-face{
+    font-family:"Copeland";
+    src:local("Copeland"), local("Copeland Regular");
+    }
+    
+    :root{
+    --primary:#271159;
+    --g1:#010101;
+    --g2:#0c0930;
+    --g3:#24194f;
+    --g4:#98648b;
+    --g5:#eeb894;
+    }
+    
+    body{
+    margin:0;
+    font-family:"Copeland",serif;
+    background:linear-gradient(to bottom,var(--g1),var(--g2),var(--g3),var(--g4),var(--g5));
+    color:white;
+    overflow-x:hidden;
+    }
+    
+    /* HERO */
+    .hero{
+    height:72vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    padding:40px;
+    position:relative;
+    overflow:hidden;
+    }
+    
+    .logo{
+    height:70px;
+    filter:drop-shadow(0 10px 20px rgba(0,0,0,.6));
+    }
+    
+    /* HAMBURGER */
+    .hamburger{
+    width:52px;
+    height:52px;
+    border-radius:14px;
+    background:rgba(255,255,255,.08);
+    backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.15);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:.3s;
+    }
+    .hamburger:hover{background:rgba(255,255,255,.18)}
+    .hamburger span,
+    .hamburger span::before,
+    .hamburger span::after{
+    content:"";
+    display:block;
+    width:22px;
+    height:2px;
+    background:white;
+    position:relative;
+    }
+    .hamburger span::before{position:absolute;top:-7px}
+    .hamburger span::after{position:absolute;top:7px}
+    
+    /* DRAWER */
+    .drawer{
+    position:fixed;
+    top:0;
+    right:0;
+    width:300px;
+    height:100%;
+    background:rgba(10,10,25,.98);
+    padding:30px;
+    transform:translateX(100%);
+    transition:.4s cubic-bezier(.77,0,.18,1);
+    z-index:20;
+    }
+    .drawer.open{transform:translateX(0)}
+    .drawer h3{margin-top:0;color:#eeb894;font-weight:400}
+    .drawer label{display:block;margin:12px 0;cursor:pointer;color:#ddd}
+    
+    #overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.6);
+    display:none;
+    z-index:15;
+    backdrop-filter:blur(4px);
+    }
+    
+    .closeBtn{
+    background:none;
+    border:none;
+    color:white;
+    font-size:22px;
+    cursor:pointer;
+    float:right;
+    }
+    
+    /* GRID SECTION */
+    .section{
+    padding:70px 40px;
+    background:#f6efe7;
+    color:#271159;
+    }
+    
+    .section .card{
+    background:#ffffff;
+    border:1px solid rgba(0,0,0,.08);
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+    }
+    
+    .section .card p{color:#6e5aa6}
+    
+    .section .card:hover{
+    background:#fff;
+    transform:translateY(-10px) scale(1.03);
+    box-shadow:0 20px 50px rgba(0,0,0,.15);
+    }
+    
+    .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
+    gap:28px;
+    }
+    
+    .card{
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:20px;
+    padding:18px;
+    text-align:center;
+    backdrop-filter:blur(12px);
+    transition:.35s;
+    cursor:pointer;
+    }
+    
+    .card:hover{
+    transform:translateY(-8px) scale(1.02);
+    background:rgba(255,255,255,.12);
+    }
+    
+    .card img{
+    width:100%;
+    height:210px;
+    object-fit:contain;
+    filter:drop-shadow(0 10px 20px rgba(0,0,0,.7));
+    }
+    
+    .card h4{
+    margin:12px 0 6px;
+    font-weight:400;
+    letter-spacing:1px;
+    }
+    
+    .card p{
+    margin:0;
+    font-size:13px;
+    color:#d6c6ff;
+    }
+    
+    /* MODAL */
+    .modal{
+    position:fixed;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:rgba(0,0,0,.7);
+    z-index:30;
+    backdrop-filter:blur(6px);
+    }
+    
+    .modal-content{
+    background:#0c0930;
+    padding:30px;
+    border-radius:26px;
+    max-width:420px;
+    width:92%;
+    animation:fade .4s ease;
+    border:1px solid rgba(255,255,255,.1);
+    }
+    
+    @keyframes fade{
+    from{opacity:0;transform:translateY(20px)}
+    to{opacity:1;transform:translateY(0)}
+    }
+    
+    .note{font-size:14px;margin:6px 0;color:#ddd}
+    
+
+
+
+    /*HERO STAR FIELD*/
+
+
+    #stars{
+        position:absolute;
+        top:0;
+        left:0;
+        width:100%;
+        height:100%;
+        z-index:0;
+        }
+        
+        .hero > *:not(canvas){
+        position:relative;
+        z-index:1;
+        }
+        
+
+
+
+
+
+
