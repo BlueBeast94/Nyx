@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NYX — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400..900;1,400..900&family=Manrope:wght@200..800&display=swap" rel="stylesheet"/>
+<style>
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        min-height: 100vh;
+        background: #141314;
+        color: #e5e1e2;
+        font-family: "Manrope", sans-serif;
+    }
+    header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 24px 40px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    header h1 {
+        font-family: "Bodoni Moda", serif;
+        font-size: 24px;
+        letter-spacing: 0.1em;
+        margin: 0;
+        font-weight: 400;
+    }
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    .back-btn {
+        color: #c9c5cb;
+        text-decoration: none;
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 9999px;
+        padding: 8px 16px;
+        transition: border-color 0.25s ease, color 0.25s ease;
+    }
+    .back-btn:hover {
+        border-color: #cdbefb;
+        color: #cdbefb;
+    }
+    .who {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-size: 13px;
+        color: #c9c5cb;
+    }
+    .role-badge {
+        background: rgba(205, 190, 251, 0.12);
+        color: #cdbefb;
+        padding: 4px 12px;
+        border-radius: 9999px;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+    }
+    .logout-btn {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #e5e1e2;
+        padding: 8px 18px;
+        border-radius: 9999px;
+        font-family: "Manrope", sans-serif;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        cursor: pointer;
+    }
+    main {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 40px 24px;
+    }
+    .tabs {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 32px;
+    }
+    .tab-btn {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: #c9c5cb;
+        padding: 10px 22px;
+        border-radius: 9999px;
+        font-family: "Manrope", sans-serif;
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        cursor: pointer;
+    }
+    .tab-btn.active {
+        border-color: #cdbefb;
+        color: #cdbefb;
+        background: rgba(205, 190, 251, 0.08);
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .panel-header h2 {
+        font-family: "Bodoni Moda", serif;
+        font-weight: 400;
+        font-size: 26px;
+        margin: 0;
+    }
+    .primary-btn {
+        background: #cdbefb;
+        color: #1f1244;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 9999px;
+        font-family: "Manrope", sans-serif;
+        font-weight: 700;
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        cursor: pointer;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+    th, td {
+        text-align: left;
+        padding: 14px 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        vertical-align: top;
+    }
+    th {
+        color: #c9c5cb;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        font-weight: 500;
+    }
+    td img {
+        width: 48px;
+        height: 64px;
+        object-fit: cover;
+        border-radius: 6px;
+    }
+    .no-photo {
+        width: 48px;
+        height: 64px;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.06);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6e6a72;
+        font-size: 10px;
+    }
+    .empty-row td {
+        color: #6e6a72;
+        text-align: center;
+        padding: 40px 0;
+    }
+
+    .success {
+        background: rgba(143, 224, 168, 0.1);
+        border: 1px solid rgba(143, 224, 168, 0.3);
+        color: #8fe0a8;
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 13px;
+        margin-bottom: 20px;
+    }
+    .error {
+        background: rgba(255, 180, 171, 0.1);
+        border: 1px solid rgba(255, 180, 171, 0.3);
+        color: #ffb4ab;
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 13px;
+        margin-bottom: 20px;
+    }
+
+    .inline-form {
+        display: flex;
+        gap: 12px;
+        align-items: end;
+        flex-wrap: wrap;
+        margin-bottom: 32px;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .field label {
+        display: block;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #c9c5cb;
+        margin-bottom: 6px;
+    }
+    input, select, textarea {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+        padding: 10px 12px;
+        color: #e5e1e2;
+        font-family: "Manrope", sans-serif;
+        font-size: 13px;
+    }
+    input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: #cdbefb;
+    }
+
+    #perfumeGender {
+        background: #1c1b1c;
+        border: 1.5px solid rgba(205, 190, 251, 0.5);
+        color: #ffffff;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    #perfumeGender option {
+        background: #1c1b1c;
+        color: #ffffff;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 12px;
+    }
+    .form-row .field {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(6px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+        padding: 20px;
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal-form {
+        background: #1c1b1c;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        padding: 32px;
+        width: 100%;
+        max-width: 560px;
+        max-height: 90vh;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+    .modal-form h3 {
+        font-family: "Bodoni Moda", serif;
+        font-weight: 400;
+        margin: 0 0 8px;
+        font-size: 22px;
+    }
+    .modal-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 8px;
+    }
+    .modal-actions button { flex: 1; }
+    .cancel-btn {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #e5e1e2;
+        border-radius: 9999px;
+        padding: 12px;
+        font-family: "Manrope", sans-serif;
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        cursor: pointer;
+    }
+
+    .file-picker {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .file-picker input[type="file"] {
+        display: none;
+    }
+    .file-picker-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(205, 190, 251, 0.1);
+        border: 1px dashed rgba(205, 190, 251, 0.4);
+        color: #cdbefb;
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-family: "Manrope", sans-serif;
+        font-size: 12px;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background 0.2s ease, border-color 0.2s ease;
+    }
+    .file-picker-btn:hover {
+        background: rgba(205, 190, 251, 0.18);
+        border-color: #cdbefb;
+    }
+    .file-picker-name {
+        font-size: 12px;
+        color: #6e6a72;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .photo-preview {
+        margin-top: 10px;
+        width: 90px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .photo-preview.hidden {
+        display: none;
+    }
+
+    .edit-btn {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #c9c5cb;
+        border-radius: 9999px;
+        padding: 6px 16px;
+        font-family: "Manrope", sans-serif;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        cursor: pointer;
+    }
+    .edit-btn:hover {
+        border-color: #cdbefb;
+        color: #cdbefb;
+    }
+
+    .gender-badge {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 5px 12px;
+        border-radius: 9999px;
+        border: 1px solid transparent;
+    }
+    .gender-badge.masculino {
+        background: rgba(107, 163, 230, 0.18);
+        color: #8fc0f0;
+        border-color: rgba(107, 163, 230, 0.4);
+    }
+    .gender-badge.femenino {
+        background: rgba(230, 107, 168, 0.18);
+        color: #f08fc0;
+        border-color: rgba(230, 107, 168, 0.4);
+    }
+
+    .stock-badge {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        padding: 5px 12px;
+        border-radius: 9999px;
+    }
+    .stock-badge.yes {
+        background: rgba(143, 224, 168, 0.15);
+        color: #8fe0a8;
+    }
+    .stock-badge.no {
+        background: rgba(255, 180, 171, 0.15);
+        color: #ffb4ab;
+    }
+
+    .checkbox-field {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .checkbox-field input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: #cdbefb;
+        cursor: pointer;
+    }
+    .checkbox-field label {
+        margin: 0;
+    }
+
+    .autocomplete {
+        position: relative;
+    }
+    .autocomplete-list {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: #26252a;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 8px;
+        max-height: 180px;
+        overflow-y: auto;
+        z-index: 10;
+    }
+    .autocomplete-list.hidden {
+        display: none;
+    }
+    .autocomplete-option {
+        padding: 8px 12px;
+        font-size: 13px;
+        cursor: pointer;
+    }
+    .autocomplete-option:hover,
+    .autocomplete-option.active {
+        background: rgba(205, 190, 251, 0.12);
+    }
+
+    .table-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+    .table-controls .field {
+        margin: 0;
+    }
+    .table-search {
+        min-width: 240px;
+    }
+
+    .pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 16px;
+        font-size: 12px;
+        color: #c9c5cb;
+        flex-wrap: wrap;
+    }
+    .pagination-btn {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #e5e1e2;
+        border-radius: 8px;
+        padding: 8px 14px;
+        font-family: "Manrope", sans-serif;
+        font-size: 12px;
+        cursor: pointer;
+    }
+    .pagination-btn:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+    }
+</style>
+</head>
+<body>
+
+<header>
+<div class="header-left">
+    <a href="/" class="back-btn">&larr; Inicio</a>
+    <h1>NYX ADMIN</h1>
+</div>
+<div class="who">
+    <span>{{email}}</span>
+    <span class="role-badge">{{role}}</span>
+    <form action="/logout" method="POST">
+        <button type="submit" class="logout-btn">Log out</button>
+    </form>
+</div>
+</header>
+
+<main>
+<div class="tabs">
+    <button class="tab-btn" data-tab="inventario">Inventario</button>
+    <button class="tab-btn" data-tab="marcas">Marcas</button>
+    {{#if isAdmin}}
+    <button class="tab-btn" data-tab="usuarios">Usuarios</button>
+    {{/if}}
+</div>
+
+<section id="inventario" class="tab-panel">
+    {{#if perfumeMsg}}<p class="success">{{perfumeMsg}}</p>{{/if}}
+    {{#if perfumeError}}<p class="error">{{perfumeError}}</p>{{/if}}
+    <div class="panel-header">
+        <h2>Perfumes</h2>
+        <button class="primary-btn" id="openPerfumeModal">+ Add Perfume</button>
+    </div>
+
+    <div class="table-controls">
+        <div class="field table-search">
+            <label for="perfumeFilter">Buscar</label>
+            <input id="perfumeFilter" type="text" placeholder="Nombre, marca, modelo o género..."/>
+        </div>
+        <div class="field">
+            <label for="pageSize">Filas por página</label>
+            <select id="pageSize">
+                <option value="10">10</option>
+                <option value="40">40</option>
+                <option value="100">100</option>
+            </select>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+        <tr><th>Photo</th><th>Marca</th><th>Modelo</th><th>Género</th><th>En Stock</th><th>Notes</th><th>Description</th><th></th></tr>
+        </thead>
+        <tbody id="perfumesTableBody"></tbody>
+    </table>
+
+    <div class="pagination">
+        <span id="paginationSummary"></span>
+        <div>
+            <button type="button" class="pagination-btn" id="prevPageBtn">&larr; Anterior</button>
+            <span id="pageIndicator"></span>
+            <button type="button" class="pagination-btn" id="nextPageBtn">Siguiente &rarr;</button>
+        </div>
+    </div>
+</section>
+
+<script id="perfumesData" type="application/json">{{{json perfumes}}}</script>
+<script id="brandsData" type="application/json">{{{json brands}}}</script>
+
+<section id="marcas" class="tab-panel">
+    {{#if brandMsg}}<p class="success">{{brandMsg}}</p>{{/if}}
+    {{#if brandError}}<p class="error">{{brandError}}</p>{{/if}}
+    <div class="panel-header">
+        <h2>Marcas</h2>
+    </div>
+
+    <form action="/dashboard/brands" method="POST" class="inline-form">
+        <div class="field">
+            <label for="newBrandName">Nueva marca</label>
+            <input id="newBrandName" name="name" type="text" placeholder="Ej: Dior" required/>
+        </div>
+        <button type="submit" class="primary-btn">Agregar</button>
+    </form>
+
+    <form action="/dashboard/brands/import" method="POST" enctype="multipart/form-data" class="inline-form">
+        <div class="field">
+            <label>Importar CSV</label>
+            <div class="file-picker">
+                <button type="button" class="file-picker-btn" id="csvPickerBtn">📄 Elegir archivo CSV</button>
+                <span class="file-picker-name" id="csvFileName">Sin archivo seleccionado</span>
+                <input id="csvFile" name="file" type="file" accept=".csv,text/csv" required/>
+            </div>
+        </div>
+        <button type="submit" class="primary-btn">Importar</button>
+    </form>
+    <p style="font-size:12px;color:#6e6a72;margin-top:-16px;margin-bottom:24px;">Una marca por línea (o primera columna si el CSV tiene varias). Las que ya existen se omiten.</p>
+
+    <table>
+        <thead>
+        <tr><th>Marca</th><th>Agregada</th><th></th></tr>
+        </thead>
+        <tbody>
+        {{#each brands}}
+            <tr>
+                <td>{{this.name}}</td>
+                <td>{{this.created_at}}</td>
+                <td>
+                    <form action="/dashboard/brands/{{this.id}}/delete" method="POST" onsubmit="return confirm('¿Eliminar esta marca?');">
+                        <button type="submit" class="edit-btn">Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+        {{else}}
+            <tr class="empty-row"><td colspan="3">No brands yet.</td></tr>
+        {{/each}}
+        </tbody>
+    </table>
+</section>
+
+{{#if isAdmin}}
+<section id="usuarios" class="tab-panel">
+    {{#if userMsg}}<p class="success">{{userMsg}}</p>{{/if}}
+    {{#if userError}}<p class="error">{{userError}}</p>{{/if}}
+    <div class="panel-header">
+        <h2>Usuarios</h2>
+    </div>
+    <form action="/dashboard/users" method="POST" class="inline-form">
+        <div class="field">
+            <label for="userEmail">Email</label>
+            <input id="userEmail" name="email" type="email" required/>
+        </div>
+        <div class="field">
+            <label for="userPassword">Password</label>
+            <input id="userPassword" name="password" type="password" minlength="6" required/>
+        </div>
+        <div class="field">
+            <label for="userRole">Role</label>
+            <select id="userRole" name="role">
+                <option value="vendor">Vendor</option>
+                <option value="admin">Admin</option>
+            </select>
+        </div>
+        <button type="submit" class="primary-btn">Create User</button>
+    </form>
+    <table>
+        <thead>
+        <tr><th>Email</th><th>Role</th></tr>
+        </thead>
+        <tbody>
+        {{#each users}}
+            <tr><td>{{this.email}}</td><td>{{this.role}}</td></tr>
+        {{else}}
+            <tr class="empty-row"><td colspan="2">No users yet.</td></tr>
+        {{/each}}
+        </tbody>
+    </table>
+</section>
+{{/if}}
+</main>
+
+<div class="modal-overlay hidden" id="perfumeModal">
+    <form action="/dashboard/perfumes" method="POST" enctype="multipart/form-data" class="modal-form" id="perfumeForm">
+        <h3 id="perfumeModalTitle">Add Perfume</h3>
+        <div class="form-row">
+            <div class="field autocomplete">
+                <label for="perfumeBrand">Marca</label>
+                <input id="perfumeBrand" name="brand" type="text" autocomplete="off" required/>
+                <div class="autocomplete-list hidden" id="brandSuggestions"></div>
+            </div>
+            <div class="field">
+                <label for="perfumeModel">Modelo</label>
+                <input id="perfumeModel" name="model" type="text" required/>
+            </div>
+            <div class="field">
+                <label for="perfumeGender">Género</label>
+                <select id="perfumeGender" name="gender">
+                    <option value="">— Elegir género —</option>
+                    <option value="masculino">♂ Masculino</option>
+                    <option value="femenino">♀ Femenino</option>
+                </select>
+            </div>
+        </div>
+        <div class="checkbox-field">
+            <input id="perfumeInStock" name="inStock" type="checkbox" checked/>
+            <label for="perfumeInStock">En stock</label>
+        </div>
+        <div class="field">
+            <label>Photo</label>
+            <div class="file-picker">
+                <button type="button" class="file-picker-btn" id="photoPickerBtn">📷 Elegir foto</button>
+                <span class="file-picker-name" id="photoFileName">Sin archivo seleccionado</span>
+                <input id="perfumePhoto" name="photo" type="file" accept="image/*"/>
+            </div>
+            <img id="photoPreview" class="photo-preview hidden" alt="Preview"/>
+        </div>
+        <div class="form-row">
+            <div class="field">
+                <label for="notesTop">Top Notes</label>
+                <input id="notesTop" name="notesTop" type="text"/>
+            </div>
+            <div class="field">
+                <label for="notesMiddle">Middle Notes</label>
+                <input id="notesMiddle" name="notesMiddle" type="text"/>
+            </div>
+            <div class="field">
+                <label for="notesBase">Base Notes</label>
+                <input id="notesBase" name="notesBase" type="text"/>
+            </div>
+        </div>
+        <div class="field">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" rows="2"></textarea>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="cancel-btn" id="closePerfumeModal">Cancel</button>
+            <button type="submit" class="primary-btn" id="perfumeSubmitBtn">Save</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // ===== Tabs =====
+    const tabButtons = document.querySelectorAll(".tab-btn");
+    const tabPanels = document.querySelectorAll(".tab-panel");
+
+    function activateTab(name) {
+        tabButtons.forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
+        tabPanels.forEach((p) => p.classList.toggle("active", p.id === name));
+    }
+
+    tabButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+            activateTab(btn.dataset.tab);
+            history.replaceState(null, "", `#${btn.dataset.tab}`);
+        });
+    });
+
+    const initialTab = window.location.hash.replace("#", "") || "inventario";
+    activateTab(document.getElementById(initialTab) ? initialTab : "inventario");
+
+    // ===== Perfume modal (shared by Add + Edit) =====
+    const perfumeModal = document.getElementById("perfumeModal");
+    const perfumeForm = document.getElementById("perfumeForm");
+    const perfumeModalTitle = document.getElementById("perfumeModalTitle");
+    const perfumeSubmitBtn = document.getElementById("perfumeSubmitBtn");
+    const photoInput = document.getElementById("perfumePhoto");
+    const photoPickerBtn = document.getElementById("photoPickerBtn");
+    const photoFileName = document.getElementById("photoFileName");
+    const photoPreview = document.getElementById("photoPreview");
+
+    function resetPhotoPicker() {
+        photoFileName.textContent = "Sin archivo seleccionado";
+        photoPreview.classList.add("hidden");
+        photoPreview.src = "";
+    }
+
+    function openModalForCreate() {
+        perfumeForm.reset();
+        perfumeForm.action = "/dashboard/perfumes";
+        perfumeModalTitle.textContent = "Add Perfume";
+        perfumeSubmitBtn.textContent = "Save";
+        resetPhotoPicker();
+        perfumeModal.classList.remove("hidden");
+    }
+
+    function openModalForEdit(perfume) {
+        perfumeForm.reset();
+        perfumeForm.action = `/dashboard/perfumes/${perfume.id}`;
+        perfumeModalTitle.textContent = "Edit Perfume";
+        perfumeSubmitBtn.textContent = "Update";
+        document.getElementById("perfumeBrand").value = perfume.brand || "";
+        document.getElementById("perfumeModel").value = perfume.model || "";
+        document.getElementById("perfumeGender").value = perfume.gender || "";
+        document.getElementById("perfumeInStock").checked = perfume.in_stock !== false;
+        document.getElementById("notesTop").value = perfume.notes_top || "";
+        document.getElementById("notesMiddle").value = perfume.notes_middle || "";
+        document.getElementById("notesBase").value = perfume.notes_base || "";
+        document.getElementById("description").value = perfume.description || "";
+
+        if (perfume.image_url) {
+            photoFileName.textContent = "Foto actual (sin cambios)";
+            photoPreview.src = perfume.image_url;
+            photoPreview.classList.remove("hidden");
+        } else {
+            resetPhotoPicker();
+        }
+        perfumeModal.classList.remove("hidden");
+    }
+
+    document.getElementById("openPerfumeModal").addEventListener("click", openModalForCreate);
+    document.getElementById("closePerfumeModal").addEventListener("click", () => {
+        perfumeModal.classList.add("hidden");
+    });
+    perfumeModal.addEventListener("click", (e) => {
+        if (e.target === perfumeModal) perfumeModal.classList.add("hidden");
+    });
+
+    // ===== File picker =====
+    photoPickerBtn.addEventListener("click", () => photoInput.click());
+    photoInput.addEventListener("change", () => {
+        const file = photoInput.files[0];
+        if (!file) {
+            resetPhotoPicker();
+            return;
+        }
+        photoFileName.textContent = file.name;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            photoPreview.src = e.target.result;
+            photoPreview.classList.remove("hidden");
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // ===== CSV picker (brand import) =====
+    const csvPickerBtn = document.getElementById("csvPickerBtn");
+    const csvFileInput = document.getElementById("csvFile");
+    const csvFileName = document.getElementById("csvFileName");
+
+    csvPickerBtn.addEventListener("click", () => csvFileInput.click());
+    csvFileInput.addEventListener("change", () => {
+        csvFileName.textContent = csvFileInput.files[0] ? csvFileInput.files[0].name : "Sin archivo seleccionado";
+    });
+
+    // ===== Brand autocomplete =====
+    const ALL_BRANDS = JSON.parse(document.getElementById("brandsData").textContent || "[]").map((b) => b.name);
+    const brandInput = document.getElementById("perfumeBrand");
+    const brandSuggestions = document.getElementById("brandSuggestions");
+
+    function showBrandSuggestions() {
+        const term = brandInput.value.trim().toLowerCase();
+        const matches = term
+            ? ALL_BRANDS.filter((name) => name.toLowerCase().includes(term))
+            : ALL_BRANDS;
+
+        if (matches.length === 0) {
+            brandSuggestions.classList.add("hidden");
+            return;
+        }
+
+        brandSuggestions.innerHTML = matches
+            .slice(0, 20)
+            .map((name) => `<div class="autocomplete-option">${name}</div>`)
+            .join("");
+        brandSuggestions.classList.remove("hidden");
+    }
+
+    brandInput.addEventListener("focus", showBrandSuggestions);
+    brandInput.addEventListener("input", showBrandSuggestions);
+    brandSuggestions.addEventListener("click", (e) => {
+        if (!e.target.classList.contains("autocomplete-option")) return;
+        brandInput.value = e.target.textContent;
+        brandSuggestions.classList.add("hidden");
+    });
+    document.addEventListener("click", (e) => {
+        if (e.target !== brandInput && !brandSuggestions.contains(e.target)) {
+            brandSuggestions.classList.add("hidden");
+        }
+    });
+
+    // ===== Perfumes table: filter + pagination =====
+    const ALL_PERFUMES = JSON.parse(document.getElementById("perfumesData").textContent || "[]");
+    const tableBody = document.getElementById("perfumesTableBody");
+    const filterInput = document.getElementById("perfumeFilter");
+    const pageSizeSelect = document.getElementById("pageSize");
+    const prevPageBtn = document.getElementById("prevPageBtn");
+    const nextPageBtn = document.getElementById("nextPageBtn");
+    const paginationSummary = document.getElementById("paginationSummary");
+    const pageIndicator = document.getElementById("pageIndicator");
+
+    let currentPage = 1;
+
+    function escapeHtml(str) {
+        if (str == null) return "";
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    function genderLabel(gender) {
+        if (gender === "masculino") return "Masculino";
+        if (gender === "femenino") return "Femenino";
+        return "";
+    }
+
+    function getFilteredPerfumes() {
+        const term = filterInput.value.trim().toLowerCase();
+        if (!term) return ALL_PERFUMES;
+        return ALL_PERFUMES.filter((p) =>
+            [p.brand, p.model, p.gender].some((f) => (f || "").toLowerCase().includes(term))
+        );
+    }
+
+    function renderTable() {
+        const pageSize = parseInt(pageSizeSelect.value, 10);
+        const filtered = getFilteredPerfumes();
+        const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+        currentPage = Math.min(currentPage, totalPages);
+
+        const start = (currentPage - 1) * pageSize;
+        const pageItems = filtered.slice(start, start + pageSize);
+
+        tableBody.innerHTML = "";
+
+        if (pageItems.length === 0) {
+            tableBody.innerHTML = `<tr class="empty-row"><td colspan="8">No perfumes match.</td></tr>`;
+        } else {
+            pageItems.forEach((p) => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${p.image_url ? `<img src="${escapeHtml(p.image_url)}" alt="${escapeHtml(p.model)}"/>` : `<div class="no-photo">N/A</div>`}</td>
+                    <td>${escapeHtml(p.brand)}</td>
+                    <td>${escapeHtml(p.model)}</td>
+                    <td>${p.gender ? `<span class="gender-badge ${escapeHtml(p.gender)}">${escapeHtml(genderLabel(p.gender))}</span>` : ""}</td>
+                    <td><span class="stock-badge ${p.in_stock ? "yes" : "no"}">${p.in_stock ? "Sí" : "No"}</span></td>
+                    <td>Top: ${escapeHtml(p.notes_top)}<br/>Middle: ${escapeHtml(p.notes_middle)}<br/>Base: ${escapeHtml(p.notes_base)}</td>
+                    <td>${escapeHtml(p.description)}</td>
+                    <td><button type="button" class="edit-btn" data-id="${escapeHtml(p.id)}">Editar</button></td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        tableBody.querySelectorAll(".edit-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                const perfume = ALL_PERFUMES.find((p) => p.id === btn.dataset.id);
+                if (perfume) openModalForEdit(perfume);
+            });
+        });
+
+        const rangeStart = filtered.length === 0 ? 0 : start + 1;
+        const rangeEnd = Math.min(start + pageSize, filtered.length);
+        paginationSummary.textContent = `Mostrando ${rangeStart}-${rangeEnd} de ${filtered.length}`;
+        pageIndicator.textContent = `Página ${currentPage} de ${totalPages}`;
+        prevPageBtn.disabled = currentPage <= 1;
+        nextPageBtn.disabled = currentPage >= totalPages;
+    }
+
+    filterInput.addEventListener("input", () => {
+        currentPage = 1;
+        renderTable();
+    });
+    pageSizeSelect.addEventListener("change", () => {
+        currentPage = 1;
+        renderTable();
+    });
+    prevPageBtn.addEventListener("click", () => {
+        currentPage -= 1;
+        renderTable();
+    });
+    nextPageBtn.addEventListener("click", () => {
+        currentPage += 1;
+        renderTable();
+    });
+
+    renderTable();
+</script>
+
+</body>
+</html>

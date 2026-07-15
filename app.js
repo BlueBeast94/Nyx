@@ -1,132 +1,307 @@
+// ===== Product catalog — loaded from the real backend (/api/perfumes) =====
+let products = [];
 
-const perfumes=[
-    { id:1,name:"Coco Mademoiselle",brand:"Chanel",image:"https://fimgs.net/mdimg/perfume/375x500.611.jpg",notes:{top:["orange","bergamot"],middle:["rose"],base:["vanilla"]}},
-    { id:2,name:"Sauvage",brand:"Dior",image:"https://fimgs.net/mdimg/perfume/375x500.31861.jpg",notes:{top:["pepper"],middle:["lavender"],base:["ambroxan"]}},
-    { id:3,name:"Black Opium",brand:"YSL",image:"https://fimgs.net/mdimg/perfume/375x500.25324.jpg",notes:{top:["coffee"],middle:["jasmine"],base:["vanilla"]}}
-    ];
-    
-    const grid=document.getElementById("grid");
-    const drawer=document.getElementById("drawer");
-    const overlay=document.getElementById("overlay");
-    const modal=document.getElementById("modal");
-    const modalContent=document.getElementById("modalContent");
-    const brandFilters=document.getElementById("brandFilters");
-    const menuBtn=document.getElementById("menuBtn");
-    const closeDrawer=document.getElementById("closeDrawer");
-    
-    let activeBrands=new Set();
-    
-    menuBtn.onclick=()=>{drawer.classList.add("open");overlay.style.display="block"}
-    closeDrawer.onclick=closeDrawerFn;
-    overlay.onclick=closeDrawerFn;
-    
-    function closeDrawerFn(){drawer.classList.remove("open");overlay.style.display="none"}
-    
-    function renderBrands(){
-    const brands=[...new Set(perfumes.map(p=>p.brand))];
-    brandFilters.innerHTML="";
-    
-    brands.forEach(b=>{
-    brandFilters.innerHTML+=`<label><input type="checkbox" value="${b}"> ${b}</label>`;
-    });
-    
-    brandFilters.querySelectorAll("input").forEach(cb=>{
-    cb.addEventListener("change",()=>{
-    cb.checked?activeBrands.add(cb.value):activeBrands.delete(cb.value);
+function escapeHtml(str) {
+    if (str == null) return "";
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function splitNotes(str) {
+    return (str || "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+}
+
+function transformPerfume(row) {
+    const notes = {
+        top: splitNotes(row.notes_top),
+        middle: splitNotes(row.notes_middle),
+        base: splitNotes(row.notes_base)
+    };
+    const tags = [...new Set([...notes.top, ...notes.middle, ...notes.base])].slice(0, 3);
+    const categories = row.gender === "masculino" ? ["Men"] : row.gender === "femenino" ? ["Women"] : [];
+
+    return {
+        id: row.id,
+        name: row.model || row.name, // Modelo is the display title; falls back to the legacy name field
+        brand: row.brand,
+        model: row.model,
+        gender: row.gender,
+        description: row.description,
+        categories, // Luxury Collection/Oriental/Unisex still have no data source yet
+        tags,
+        notes,
+        price: row.price ?? null, // not collected by the dashboard yet
+        inStock: row.in_stock ?? null,
+        image: row.image_url
+    };
+}
+
+function genderLabel(gender) {
+    if (gender === "masculino") return "Masculino";
+    if (gender === "femenino") return "Femenino";
+    return "";
+}
+
+function genderBadgeClasses(gender) {
+    if (gender === "masculino") return "bg-blue-500/25 text-blue-200";
+    if (gender === "femenino") return "bg-pink-500/25 text-pink-200";
+    return "bg-black/50 text-white";
+}
+
+async function loadPerfumes() {
+    try {
+        const res = await fetch("/api/perfumes");
+        const data = await res.json();
+        products = Array.isArray(data) ? data.map(transformPerfume) : [];
+    } catch (err) {
+        console.error("Failed to load perfumes:", err);
+        products = [];
+    }
     render();
-    });
-    });
+}
+
+// ===== DOM refs =====
+const grid = document.getElementById("grid");
+const emptyState = document.getElementById("emptyState");
+const searchInput = document.getElementById("searchInput");
+const categoryFilters = document.getElementById("categoryFilters");
+const modal = document.getElementById("modal");
+const modalContent = document.getElementById("modalContent");
+const starField = document.getElementById("starField");
+const menuBtn = document.getElementById("menuBtn");
+const exploreBtn = document.getElementById("exploreBtn");
+const featuredBtn = document.getElementById("featuredBtn");
+const drawer = document.getElementById("drawer");
+const drawerOverlay = document.getElementById("drawerOverlay");
+const closeDrawer = document.getElementById("closeDrawer");
+
+let activeCategory = "all";
+let searchTerm = "";
+
+// ===== Star field (twinkle + slow falling drift, like the original canvas version) =====
+(function generateStars() {
+    const starCount = 120;
+    const stars = [];
+
+    for (let i = 0; i < starCount; i++) {
+        const star = document.createElement("div");
+        star.className = "star";
+
+        const x = Math.random() * 100;
+        const y = Math.random() * 70;
+        const size = Math.random() * 2 + 0.5;
+        const duration = Math.random() * 3 + 2;
+        const delay = Math.random() * 5;
+        const fallSpeed = Math.random() * 0.02 + 0.008;
+
+        star.style.left = `${x}%`;
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+        star.style.setProperty("--duration", `${duration}s`);
+        star.style.animationDelay = `${delay}s`;
+
+        starField.appendChild(star);
+        stars.push({ el: star, y, fallSpeed });
+        star.style.top = `${y}%`;
     }
-    
-    function render(){
-    grid.innerHTML="";
-    let filtered=perfumes.filter(p=>activeBrands.size===0||activeBrands.has(p.brand));
-    
-    filtered.forEach(p=>{
-    const el=document.createElement("div");
-    el.className="card";
-    el.innerHTML=`<img src="${p.image}"><h4>${p.name}</h4><p>${p.brand}</p>`;
-    el.onclick=()=>openModal(p);
-    grid.appendChild(el);
+
+    function fall() {
+        stars.forEach((s) => {
+            s.y += s.fallSpeed;
+            if (s.y > 70) {
+                s.y = 0;
+                s.el.style.left = `${Math.random() * 100}%`;
+            }
+            s.el.style.top = `${s.y}%`;
+        });
+        requestAnimationFrame(fall);
+    }
+    requestAnimationFrame(fall);
+})();
+
+// ===== Logo fallback (shows text logo until logo.png is added) =====
+document.querySelectorAll('img[alt="NYX PERFUMES"]').forEach((img) => {
+    img.addEventListener("error", () => {
+        img.classList.add("hidden");
+        const fallback = img.nextElementSibling;
+        if (fallback) fallback.classList.remove("hidden");
     });
-    }
-    
-    function openModal(p){
-    modal.style.display="flex";
-    modalContent.innerHTML=`
-    <h2>${p.name}</h2>
-    <p>${p.brand}</p>
-    <img src="${p.image}" style="width:100%;height:220px;object-fit:contain">
-    <h3 style="color:#eeb894">Notes</h3>
-    <div class="note"><b>Top:</b> ${p.notes.top}</div>
-    <div class="note"><b>Middle:</b> ${p.notes.middle}</div>
-    <div class="note"><b>Base:</b> ${p.notes.base}</div>
-    `;
-    }
-    
-    modal.onclick=e=>{if(e.target===modal)modal.style.display="none"}
-    
-    renderBrands();
-    render();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    const canvas=document.getElementById("stars");
-const ctx=canvas.getContext("2d");
-
-let stars=[];
-let w,h;
-
-function resize(){
-w=canvas.width=canvas.offsetWidth;
-h=canvas.height=canvas.offsetHeight;
-
-stars=[];
-for(let i=0;i<120;i++){
-stars.push({
-x:Math.random()*w,
-y:Math.random()*h,
-r:Math.random()*1.2,
-v:Math.random()*0.3+0.05
 });
-}
-}
-window.addEventListener("resize",resize);
-resize();
 
-function animate(){
-ctx.clearRect(0,0,w,h);
-
-for(let s of stars){
-ctx.beginPath();
-ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
-ctx.fillStyle="rgba(255,255,255,.8)";
-ctx.fill();
-
-s.y+=s.v;
-
-if(s.y>h){
-s.y=0;
-s.x=Math.random()*w;
-}
+// ===== Stock badge helper =====
+function stockBadge(inStock) {
+    if (inStock === null || inStock === undefined) return "";
+    return inStock
+        ? `<span class="stock-badge in-stock">In Stock</span>`
+        : `<span class="stock-badge out-of-stock">Sold Out</span>`;
 }
 
-requestAnimationFrame(animate);
+// ===== Render grid =====
+function render() {
+    const term = searchTerm.trim().toLowerCase();
+
+    const filtered = products.filter((p) => {
+        const matchesCategory = activeCategory === "all" || p.categories.includes(activeCategory);
+        const matchesSearch =
+            !term ||
+            p.name.toLowerCase().includes(term) ||
+            p.tags.some((t) => t.toLowerCase().includes(term));
+        return matchesCategory && matchesSearch;
+    });
+
+    grid.innerHTML = "";
+    emptyState.classList.toggle("hidden", filtered.length > 0);
+
+    filtered.forEach((p) => {
+        const card = document.createElement("div");
+        card.className = "glass-card bg-surface-container rounded-xl p-3 group border border-white/5 cursor-pointer";
+        card.innerHTML = `
+            <div class="relative aspect-[3/4] mb-4 overflow-hidden rounded-lg bg-surface-container-high flex items-center justify-center">
+                ${
+                    p.image
+                        ? `<img alt="${escapeHtml(p.name)}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" src="${escapeHtml(p.image)}"/>`
+                        : `<span class="text-on-surface-variant text-[10px] uppercase tracking-widest">No Photo</span>`
+                }
+                <div class="absolute top-2 left-2">${stockBadge(p.inStock)}</div>
+                ${p.gender ? `<div class="absolute top-2 right-2"><span class="text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-full backdrop-blur-sm ${genderBadgeClasses(p.gender)}">${escapeHtml(genderLabel(p.gender))}</span></div>` : ""}
+            </div>
+            <div class="text-center space-y-1.5">
+                <p class="font-label-sm text-[10px] text-primary tracking-[0.2em] uppercase">${escapeHtml(p.brand) || "NYX"}</p>
+                <h3 class="font-display-lg text-base text-on-surface leading-tight">${escapeHtml(p.name)}</h3>
+                ${p.price != null ? `<p class="font-body-md text-xs text-on-surface-variant">$${p.price}</p>` : ""}
+                <div class="flex justify-center gap-1 flex-wrap">
+                    ${p.tags.map((t) => `<span class="text-[8px] uppercase tracking-widest px-2 py-0.5 border border-white/10 rounded-full text-on-surface-variant">${escapeHtml(t)}</span>`).join("")}
+                </div>
+            </div>
+        `;
+
+        card.addEventListener("click", () => openModal(p));
+
+        grid.appendChild(card);
+        revealObserver.observe(card);
+    });
 }
-animate();
+
+// ===== Scroll reveal =====
+const revealObserver = new IntersectionObserver(
+    (entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add("revealed");
+                revealObserver.unobserve(entry.target);
+            }
+        });
+    },
+    { threshold: 0.15 }
+);
+
+// ===== Modal =====
+function openModal(p) {
+    modalContent.innerHTML = `
+        <div class="flex justify-between items-start mb-6">
+            <p class="font-label-sm text-label-sm text-primary tracking-[0.2em] uppercase">${escapeHtml(p.brand) || "NYX"}</p>
+            <button id="closeModal" class="text-on-surface-variant hover:text-on-surface">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        ${p.image ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" style="width:100%;height:260px;object-fit:contain" class="mb-6"/>` : ""}
+        <h2 class="font-display-lg text-3xl text-on-surface mb-2">${escapeHtml(p.name)}</h2>
+        ${p.gender ? `<span class="inline-block text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-4 ${genderBadgeClasses(p.gender)}">${escapeHtml(genderLabel(p.gender))}</span>` : ""}
+        <div class="flex items-center justify-between mb-6">
+            ${p.price != null ? `<p class="font-body-md text-on-surface-variant">$${p.price}</p>` : "<span></span>"}
+            ${stockBadge(p.inStock)}
+        </div>
+        ${p.description ? `<p class="font-body-md text-sm text-on-surface-variant mb-6">${escapeHtml(p.description)}</p>` : ""}
+        <h3 class="font-label-sm text-label-sm text-primary uppercase tracking-[0.2em] mb-3">Notes</h3>
+        <div class="space-y-2 font-body-md text-sm text-on-surface-variant">
+            <p><b class="text-on-surface">Top:</b> ${escapeHtml(p.notes.top.join(", ")) || "—"}</p>
+            <p><b class="text-on-surface">Middle:</b> ${escapeHtml(p.notes.middle.join(", ")) || "—"}</p>
+            <p><b class="text-on-surface">Base:</b> ${escapeHtml(p.notes.base.join(", ")) || "—"}</p>
+        </div>
+    `;
+    modal.classList.remove("hidden");
+    modalContent.querySelector("#closeModal").addEventListener("click", closeModal);
+}
+
+function closeModal() {
+    modal.classList.add("hidden");
+}
+
+modal.addEventListener("click", (e) => {
+    if (e.target === modal) closeModal();
+});
+
+// ===== Filters =====
+categoryFilters.querySelectorAll(".category-pill").forEach((btn) => {
+    if (btn.dataset.category === "all") btn.classList.add("active");
+    btn.addEventListener("click", () => {
+        categoryFilters.querySelectorAll(".category-pill").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        activeCategory = btn.dataset.category;
+        render();
+    });
+});
+
+searchInput.addEventListener("input", (e) => {
+    searchTerm = e.target.value;
+    render();
+});
+
+// ===== Hero actions =====
+exploreBtn.addEventListener("click", () => {
+    document.getElementById("collection").scrollIntoView({ behavior: "smooth" });
+});
+
+featuredBtn.addEventListener("click", () => {
+    const featured = products.find((p) => p.name === "Midnight Muse");
+    if (featured) openModal(featured);
+});
+
+// ===== Nav Drawer =====
+function openDrawer() {
+    drawer.classList.add("open");
+    drawerOverlay.classList.remove("hidden");
+}
+
+function closeDrawerFn() {
+    drawer.classList.remove("open");
+    drawerOverlay.classList.add("hidden");
+}
+
+menuBtn.addEventListener("click", openDrawer);
+closeDrawer.addEventListener("click", closeDrawerFn);
+drawerOverlay.addEventListener("click", closeDrawerFn);
+
+drawer.querySelectorAll(".drawer-link[data-scroll]").forEach((link) => {
+    link.addEventListener("click", (e) => {
+        e.preventDefault();
+        closeDrawerFn();
+        document.getElementById(link.dataset.scroll).scrollIntoView({ behavior: "smooth" });
+    });
+});
+
+// If already signed in, skip the login form and link straight to the dashboard.
+async function updateAuthLink() {
+    const loginLink = document.querySelector(".drawer-login");
+    try {
+        const res = await fetch("/api/session");
+        const { loggedIn } = await res.json();
+        if (loggedIn) {
+            loginLink.textContent = "Dashboard";
+            loginLink.setAttribute("href", "/dashboard");
+        }
+    } catch (err) {
+        console.error("Failed to check session:", err);
+    }
+}
+updateAuthLink();
+
+// ===== Init =====
+loadPerfumes();

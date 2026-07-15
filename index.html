@@ -1,42 +1,251 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NYX Fragrance Atlas</title>
-<link rel="stylesheet" href="style.css">
-<style>
-
-</style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NYX Perfumes — Artisanal Nocturnal Essences</title>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400..900;1,400..900&family=Manrope:wght@200..800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block" rel="stylesheet"/>
+<link rel="stylesheet" href="style.css"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    try {
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-tertiary-fixed-variant": "#4b3f72",
+                        "surface-container-highest": "#363435",
+                        "on-error": "#690005",
+                        "surface-dim": "#141314",
+                        "outline-variant": "#48464b",
+                        "surface-container-lowest": "#0e0e0f",
+                        "outline": "#938f95",
+                        "on-tertiary-fixed": "#1f1244",
+                        "on-secondary-fixed": "#1c1830",
+                        "on-primary": "#312f38",
+                        "surface-bright": "#3a3939",
+                        "on-secondary": "#312d47",
+                        "secondary-fixed-dim": "#c9c2e3",
+                        "on-tertiary": "#34285a",
+                        "surface": "#141314",
+                        "tertiary": "#cdbefb",
+                        "surface-container": "#201f20",
+                        "tertiary-fixed-dim": "#cdbefb",
+                        "secondary-fixed": "#e6deff",
+                        "primary": "#c9c5cf",
+                        "on-primary-fixed": "#1c1b22",
+                        "error-container": "#93000a",
+                        "surface-variant": "#363435",
+                        "secondary": "#c9c2e3",
+                        "surface-container-high": "#2b2a2a",
+                        "on-tertiary-container": "#7e71a8",
+                        "on-primary-fixed-variant": "#48454e",
+                        "background": "#141314",
+                        "on-background": "#e5e1e2",
+                        "primary-container": "#09080f",
+                        "on-surface": "#e5e1e2",
+                        "surface-container-low": "#1c1b1c",
+                        "primary-fixed-dim": "#c9c5cf",
+                        "on-primary-container": "#7a7781",
+                        "on-surface-variant": "#c9c5cb",
+                        "on-secondary-container": "#b8b1d1",
+                        "primary-fixed": "#e5e0ec",
+                        "on-secondary-fixed-variant": "#48435e",
+                        "surface-tint": "#c9c5cf",
+                        "inverse-on-surface": "#313031",
+                        "inverse-primary": "#605d66",
+                        "tertiary-container": "#0c002d",
+                        "tertiary-fixed": "#e8ddff",
+                        "secondary-container": "#48435e",
+                        "inverse-surface": "#e5e1e2",
+                        "error": "#ffb4ab",
+                        "on-error-container": "#ffdad6"
+                    },
+                    borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px" },
+                    spacing: { gutter: "24px", "margin-desktop": "80px", unit: "8px", "container-max": "1440px", "margin-mobile": "20px" },
+                    fontFamily: {
+                        "title-md": ["Manrope"],
+                        "display-lg": ["Bodoni Moda"],
+                        "headline-lg-mobile": ["Bodoni Moda"],
+                        "body-md": ["Manrope"],
+                        "body-lg": ["Manrope"],
+                        "headline-lg": ["Bodoni Moda"],
+                        "label-sm": ["Manrope"]
+                    },
+                    fontSize: {
+                        "title-md": ["20px", { lineHeight: "28px", letterSpacing: "0.1em", fontWeight: "300" }],
+                        "display-lg": ["72px", { lineHeight: "80px", letterSpacing: "0.05em", fontWeight: "400" }],
+                        "headline-lg-mobile": ["32px", { lineHeight: "40px", letterSpacing: "0.03em", fontWeight: "400" }],
+                        "body-md": ["16px", { lineHeight: "24px", letterSpacing: "0.01em", fontWeight: "300" }],
+                        "body-lg": ["18px", { lineHeight: "30px", letterSpacing: "0.01em", fontWeight: "300" }],
+                        "headline-lg": ["48px", { lineHeight: "56px", letterSpacing: "0.03em", fontWeight: "400" }],
+                        "label-sm": ["12px", { lineHeight: "16px", letterSpacing: "0.15em", fontWeight: "500" }]
+                    }
+                }
+            }
+        };
+    } catch (_e) {}
+</script>
 </head>
-<body>
+<body class="font-body-md bg-background text-on-background">
 
-<section class="hero">
-<canvas id="stars"></canvas>
+<!-- Top Navigation -->
+<header class="fixed top-0 w-full bg-transparent backdrop-blur-md z-50">
+<nav class="relative flex justify-between items-center w-full px-5 md:px-8 py-5">
+<button class="text-on-surface p-2" id="menuBtn">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<button class="text-on-surface p-2 relative">
+<span class="material-symbols-outlined">shopping_bag</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-purple-500 rounded-full"></span>
+</button>
+</nav>
+</header>
 
-<img src="logo.png" class="logo">
-<div class="hamburger" id="menuBtn"><span></span></div>
-
-</section>
-
+<!-- Nav Drawer -->
 <aside class="drawer" id="drawer">
-<button class="closeBtn" id="closeDrawer">✕</button>
-<h3>Filters</h3>
-<div id="brandFilters"></div>
+<button class="drawer-close" id="closeDrawer" aria-label="Close menu">
+<span class="material-symbols-outlined">close</span>
+</button>
+<nav class="drawer-nav">
+<a href="#collection" data-scroll="collection" class="drawer-link">Explorar</a>
+<a href="#contacto" data-scroll="contacto" class="drawer-link">Contacto</a>
+<a href="/login" class="drawer-link drawer-login">Login</a>
+</nav>
 </aside>
-<div id="overlay"></div>
+<div class="drawer-overlay hidden" id="drawerOverlay"></div>
 
-<section class="section">
-<div class="grid" id="grid"></div>
+<main class="relative z-10">
+
+<!-- Hero Section -->
+<section class="hero-gradient min-h-screen flex flex-col justify-center items-center text-center px-margin-mobile pt-32 pb-40 overflow-hidden relative">
+<div class="absolute inset-0 z-0" id="starField"></div>
+
+<div class="absolute top-32 right-12 md:right-32 z-10 crescent-moon">
+<svg fill="none" height="60" viewBox="0 0 100 100" width="60" xmlns="http://www.w3.org/2000/svg">
+<path d="M75 15C60 15 45 25 40 45C35 65 45 80 65 85C50 95 25 90 15 65C5 40 15 15 40 10C55 5 70 8 75 15Z" fill="#FDE68A"></path>
+</svg>
+</div>
+
+<div class="relative z-20 max-w-4xl mx-auto">
+<div class="mb-12">
+<h1 class="font-display-lg text-[80px] md:text-[140px] text-white leading-none tracking-tighter mb-4 select-none opacity-90">NYX</h1>
+<span class="font-label-sm text-label-sm uppercase tracking-[0.6em] text-primary/80 block">Artisanal Nocturnal Essences</span>
+</div>
+<div class="space-y-8">
+<h2 class="font-display-lg text-headline-lg-mobile md:text-5xl text-on-surface max-w-2xl mx-auto leading-tight">
+Discover Your <br/> Signature Fragrance
+</h2>
+<p class="font-body-md text-body-md text-white/70 max-w-xl mx-auto font-light">
+Explore our exclusive perfume collection inspired by elegance, personality and unforgettable moments under the starlit sky.
+</p>
+<button id="exploreBtn" class="bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/20 transition-all px-12 py-5 rounded-full font-title-md text-white uppercase tracking-widest text-sm inline-flex items-center gap-3 mx-auto mt-12">
+Explore Collection
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+
+<div class="skyline-svg">
+<svg class="w-full h-48 md:h-64" fill="#0c0836" preserveAspectRatio="none" viewBox="0 0 1440 320" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 320V240H40V280H80V200H120V260H160V180H200V240H240V120H280V220H320V160H360V240H400V100H440V260H480V180H520V280H560V220H600V140H640V240H680V100H720V260H760V180H800V240H840V120H880V220H920V160H960V240H1000V100H1040V260H1080V180H1120V280H1160V220H1200V140H1240V240H1280V100H1320V260H1360V180H1400V240H1440V320H0Z" opacity="0.4"></path>
+<path d="M0 320V260H60V290H120V220H180V270H240V190H300V250H360V140H420V240H480V180H540V260H600V210H660V130H720V230H780V160H840V250H900V110H960V260H1020V190H1080V280H1140V220H1200V150H1260V240H1320V120H1380V270H1440V320H0Z" fill="#050314"></path>
+</svg>
+</div>
 </section>
 
-<div class="modal" id="modal">
+<!-- Catalog Section -->
+<section id="collection" class="py-24 px-margin-mobile max-w-container-max mx-auto">
+
+<div class="mb-16 space-y-8">
+<div class="relative max-w-2xl mx-auto">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input id="searchInput" class="w-full bg-surface-container-low border-b border-white/10 py-4 pl-14 pr-4 focus:border-primary transition-colors focus:ring-0 text-on-surface outline-none font-light" placeholder="Search your favorite fragrance..." type="text"/>
+</div>
+<div class="flex gap-4 overflow-x-auto no-scrollbar pb-4 -mx-margin-mobile px-margin-mobile" id="categoryFilters">
+<button data-category="all" class="category-pill px-6 py-2 rounded-full font-label-sm text-xs whitespace-nowrap">All</button>
+<button data-category="Women" class="category-pill px-6 py-2 rounded-full font-label-sm text-xs whitespace-nowrap">Women</button>
+<button data-category="Men" class="category-pill px-6 py-2 rounded-full font-label-sm text-xs whitespace-nowrap">Men</button>
+<button data-category="Unisex" class="category-pill px-6 py-2 rounded-full font-label-sm text-xs whitespace-nowrap">Unisex</button>
+<button data-category="Luxury Collection" class="category-pill px-6 py-2 rounded-full font-label-sm text-xs whitespace-nowrap">Luxury Collection</button>
+<button data-category="Oriental" class="category-pill px-6 py-2 rounded-full font-label-sm text-xs whitespace-nowrap">Oriental</button>
+</div>
+</div>
+
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5" id="grid"></div>
+<p id="emptyState" class="hidden text-center text-on-surface-variant py-20 font-light">No fragrances match your search.</p>
+
+</section>
+
+<!-- Featured Banner -->
+<section class="py-24 relative overflow-hidden">
+<div class="max-w-container-max mx-auto px-margin-mobile">
+<div class="glass-card bg-surface-container/50 backdrop-blur-2xl rounded-[2rem] overflow-hidden flex flex-col md:flex-row items-center border border-white/5">
+<div class="p-12 md:w-1/2 space-y-8 z-10">
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-[0.4em]">Limited Edition</span>
+<h2 class="font-display-lg text-4xl md:text-5xl text-on-surface leading-tight">Perfume of <br/> the Month</h2>
+<p class="font-body-md text-on-surface-variant max-w-md">Experience the ethereal essence of Midnight Muse. A complex symphony of dark florals and ancient woods, crafted for those who embrace the mystery of the night.</p>
+<button id="featuredBtn" class="bg-primary text-on-primary px-10 py-5 rounded-full font-title-md uppercase tracking-widest text-sm inline-flex items-center gap-3 hover:opacity-90 transition-opacity">
+Discover More
+</button>
+</div>
+<div class="md:w-1/2 relative min-h-[500px] w-full flex items-center justify-center p-12 overflow-hidden bg-primary-container">
+<div class="absolute inset-0 bg-[#5B2EFF]/20 blur-[120px] scale-150"></div>
+<img alt="Perfume of the month" class="relative z-10 h-[400px] object-contain drop-shadow-2xl floating" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxkPdylvnCFZy8jVuCL4iclP9v6z97gTDgwytvpXyC_yAcDabBQHZDG8hlXCBcDhU_oPmxIdpkOsQVnYVPFGxXswbOMuRZPvZvGWN1e2QPd9UeWih237RxOZ05PfNTwbfUKw4sKhwj5k2kQ41E_Axoi6McIO_rnmDAiKL2sZpYJvsViuuWJv4JNptlEyhswDxMwAjTlXrBSL6V5badNeK3XHlo9rHSik6DQ4rRTgV8iXMcobBExaNNCNe5EjmbivArmbCWjEXSPhQ"/>
+</div>
+</div>
+</div>
+</section>
+
+<!-- Contact Section -->
+<section id="contacto" class="py-24 px-margin-mobile max-w-container-max mx-auto text-center">
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-[0.4em]">Contacto</span>
+<h2 class="font-display-lg text-4xl md:text-5xl text-on-surface mt-4 mb-6">Hablemos</h2>
+<p class="font-body-md text-on-surface-variant max-w-xl mx-auto mb-10">¿Tenés dudas sobre nuestras fragancias? Escribinos y te respondemos a la brevedad.</p>
+<div class="flex flex-col sm:flex-row gap-4 justify-center">
+<a href="https://wa.me/541127122853" target="_blank" rel="noopener noreferrer" class="px-8 py-4 rounded-full border border-white/10 hover:border-primary transition-colors font-label-sm text-xs tracking-[0.1em] text-on-surface inline-flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-base">chat</span> WhatsApp
+</a>
+<a href="mailto:hola@nyxperfumes.com" class="px-8 py-4 rounded-full border border-white/10 hover:border-primary transition-colors font-label-sm text-xs tracking-[0.1em] text-on-surface inline-flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-base">mail</span> Email
+</a>
+</div>
+</section>
+
+</main>
+
+<footer class="w-full py-20 border-t border-white/5 bg-surface-container-lowest">
+<div class="flex flex-col md:flex-row justify-between items-center px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto gap-8">
+<div class="h-12 w-auto flex items-center">
+<img alt="NYX PERFUMES" class="h-full w-auto object-contain footer-logo-img" src="logo.png"/>
+<span class="footer-logo-fallback font-display-lg text-xl tracking-[0.3em] text-on-surface hidden">NYX</span>
+</div>
+<div class="flex gap-12 font-label-sm text-label-sm text-on-surface-variant">
+<a class="hover:text-primary transition-all duration-300" href="#">Collections</a>
+<a class="hover:text-primary transition-all duration-300" href="#">Bespoke</a>
+<a class="hover:text-primary transition-all duration-300" href="#">Heritage</a>
+<a class="hover:text-primary transition-all duration-300" href="#">Concierge</a>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant opacity-50">
+© 2026 NYX PERFUMES. BEYOND THE SCENT.
+</p>
+</div>
+</footer>
+
+<!-- Product Detail Modal -->
+<div class="modal-overlay hidden" id="modal">
 <div class="modal-content" id="modalContent"></div>
 </div>
 
-<script src="app.js">
+<!-- WhatsApp Floating Button -->
+<a href="https://wa.me/541127122853?text=Hola%2C%20quiero%20saber%20m%C3%A1s%20sobre%20sus%20perfumes" target="_blank" rel="noopener noreferrer" class="whatsapp-btn" aria-label="Chat on WhatsApp">
+<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="white" stroke="white" stroke-width="0.9" stroke-linejoin="round" width="32" height="32">
+<path d="M16.004 3C9.376 3 4 8.373 4 15c0 2.386.696 4.61 1.897 6.484L4 29l7.73-1.86A11.93 11.93 0 0 0 16.004 27C22.63 27 28 21.627 28 15S22.63 3 16.004 3zm0 21.75c-1.98 0-3.87-.55-5.5-1.55l-.395-.235-4.585 1.103 1.14-4.47-.258-.41A9.72 9.72 0 0 1 5.25 15c0-5.93 4.824-10.75 10.754-10.75S26.75 9.07 26.75 15 21.934 24.75 16.004 24.75zm5.98-8.06c-.328-.164-1.94-.957-2.24-1.066-.3-.11-.518-.164-.737.164-.219.328-.847 1.066-1.04 1.285-.19.219-.383.246-.71.082-.328-.164-1.386-.51-2.64-1.626-.976-.87-1.635-1.945-1.827-2.273-.19-.328-.02-.505.144-.668.148-.148.328-.383.492-.574.164-.192.219-.328.328-.547.11-.219.055-.41-.027-.574-.082-.164-.737-1.777-1.01-2.434-.266-.64-.536-.553-.737-.563l-.63-.011c-.219 0-.574.082-.875.41-.3.328-1.148 1.123-1.148 2.738 0 1.615 1.176 3.176 1.34 3.395.164.219 2.316 3.535 5.613 4.957.784.339 1.396.541 1.873.693.787.25 1.503.215 2.07.13.632-.094 1.94-.793 2.213-1.559.273-.766.273-1.422.191-1.559-.082-.137-.3-.219-.629-.383z"/>
+</svg>
+</a>
 
-</script>
-
+<script src="app.js"></script>
 </body>
 </html>
