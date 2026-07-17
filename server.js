@@ -16,10 +16,11 @@ if (typeof globalThis.WebSocket === "undefined") {
 }
 
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    console.error(
-        "Missing Supabase config. Copy .env.example to .env and fill in SUPABASE_URL, SUPABASE_ANON_KEY, and SUPABASE_SERVICE_ROLE_KEY from your Supabase project's Settings > API page."
+    // Throwing (not process.exit) so this fails cleanly as a 500 under Vercel's serverless runtime too.
+    throw new Error(
+        "Missing Supabase config. Set SUPABASE_URL, SUPABASE_ANON_KEY, and SUPABASE_SERVICE_ROLE_KEY " +
+            "(locally via .env, on Vercel via Project Settings > Environment Variables)."
     );
-    process.exit(1);
 }
 
 // Used for user-facing auth (sign in) — respects RLS.
@@ -397,11 +398,14 @@ app.get("/api/perfumes", async (req, res) => {
     res.json(data || []);
 });
 
-const PORT = process.env.PORT || 3000;
-ensurePerfumesBucket()
-    .catch((err) => console.error("Could not verify/create Supabase Storage bucket:", err.message))
-    .finally(() => {
-        app.listen(PORT, () => {
-            console.log(`NYX server running at http://localhost:${PORT}`);
-        });
+ensurePerfumesBucket().catch((err) => console.error("Could not verify/create Supabase Storage bucket:", err.message));
+
+// Vercel imports this file as a serverless function handler — it must not call app.listen() there.
+if (!process.env.VERCEL) {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+        console.log(`NYX server running at http://localhost:${PORT}`);
     });
+}
+
+module.exports = app;
