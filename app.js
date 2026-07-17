@@ -1,15 +1,6 @@
 // ===== Product catalog — loaded from the real backend (/api/perfumes) =====
+// escapeHtml, genderLabel, genderBadgeClasses, and the cart helpers live in cart-utils.js
 let products = [];
-
-function escapeHtml(str) {
-    if (str == null) return "";
-    return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
-}
 
 function splitNotes(str) {
     return (str || "")
@@ -38,21 +29,10 @@ function transformPerfume(row) {
         tags,
         notes,
         price: row.price ?? null, // not collected by the dashboard yet
-        inStock: row.in_stock ?? null,
+        stockQuantity: row.stock_quantity ?? null,
+        inStock: row.stock_quantity != null ? row.stock_quantity >= 1 : null,
         image: row.image_url
     };
-}
-
-function genderLabel(gender) {
-    if (gender === "masculino") return "Masculino";
-    if (gender === "femenino") return "Femenino";
-    return "";
-}
-
-function genderBadgeClasses(gender) {
-    if (gender === "masculino") return "bg-blue-500/25 text-blue-200";
-    if (gender === "femenino") return "bg-pink-500/25 text-pink-200";
-    return "bg-black/50 text-white";
 }
 
 async function loadPerfumes() {
@@ -179,10 +159,30 @@ function render() {
                 <div class="flex justify-center gap-1 flex-wrap">
                     ${p.tags.map((t) => `<span class="text-[8px] uppercase tracking-widest px-2 py-0.5 border border-white/10 rounded-full text-on-surface-variant">${escapeHtml(t)}</span>`).join("")}
                 </div>
+                ${
+                    p.inStock !== false
+                        ? `<div class="flex justify-end pt-1">
+                            <button type="button" class="add-to-cart-btn w-8 h-8 rounded-full bg-white/5 border border-white/15 flex items-center justify-center text-on-surface hover:bg-primary hover:border-primary hover:text-on-primary transition-colors" aria-label="Agregar a carrito">
+                                <span class="material-symbols-outlined text-[17px]">add_shopping_cart</span>
+                            </button>
+                          </div>`
+                        : ""
+                }
             </div>
         `;
 
         card.addEventListener("click", () => openModal(p));
+
+        const addBtn = card.querySelector(".add-to-cart-btn");
+        if (addBtn) {
+            setCartButtonState(addBtn, isInCart(p.id));
+            addBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                addToCart(p.id);
+                showToast("Agregado al carrito");
+                setCartButtonState(addBtn, true);
+            });
+        }
 
         grid.appendChild(card);
         revealObserver.observe(card);
@@ -220,14 +220,45 @@ function openModal(p) {
         </div>
         ${p.description ? `<p class="font-body-md text-sm text-on-surface-variant mb-6">${escapeHtml(p.description)}</p>` : ""}
         <h3 class="font-label-sm text-label-sm text-primary uppercase tracking-[0.2em] mb-3">Notes</h3>
-        <div class="space-y-2 font-body-md text-sm text-on-surface-variant">
+        <div class="space-y-2 font-body-md text-sm text-on-surface-variant mb-6">
             <p><b class="text-on-surface">Top:</b> ${escapeHtml(p.notes.top.join(", ")) || "—"}</p>
             <p><b class="text-on-surface">Middle:</b> ${escapeHtml(p.notes.middle.join(", ")) || "—"}</p>
             <p><b class="text-on-surface">Base:</b> ${escapeHtml(p.notes.base.join(", ")) || "—"}</p>
         </div>
+        ${
+            p.inStock === false
+                ? `<button type="button" class="w-full py-3.5 rounded-full bg-white/5 text-on-surface-variant text-[11px] uppercase tracking-[0.15em] cursor-not-allowed" disabled>Agotado</button>`
+                : `<button type="button" id="modalAddToCart" class="inline-flex items-center justify-center gap-2 w-full py-3.5 rounded-full border border-white/15 bg-white/5 backdrop-blur-sm hover:border-primary hover:bg-primary/10 transition-colors text-on-surface text-[11px] uppercase tracking-[0.15em]">
+                    <span class="material-symbols-outlined text-base">add_shopping_cart</span>
+                    Agregar a Carrito
+                  </button>`
+        }
     `;
     modal.classList.remove("hidden");
     modalContent.querySelector("#closeModal").addEventListener("click", closeModal);
+
+    const modalAddBtn = modalContent.querySelector("#modalAddToCart");
+    if (modalAddBtn) {
+        setModalAddToCartState(modalAddBtn, isInCart(p.id));
+        modalAddBtn.addEventListener("click", () => {
+            addToCart(p.id);
+            showToast("Agregado al carrito");
+            setModalAddToCartState(modalAddBtn, true);
+        });
+    }
+}
+
+function setModalAddToCartState(btn, inCart) {
+    btn.disabled = inCart;
+    if (inCart) {
+        btn.classList.remove("border-white/15", "bg-white/5", "hover:border-primary", "hover:bg-primary/10", "text-on-surface");
+        btn.classList.add("border-green-400/40", "bg-green-500/15", "text-green-300", "cursor-default");
+        btn.innerHTML = `<span class="material-symbols-outlined text-base">check</span> En el carrito`;
+    } else {
+        btn.classList.remove("border-green-400/40", "bg-green-500/15", "text-green-300", "cursor-default");
+        btn.classList.add("border-white/15", "bg-white/5", "hover:border-primary", "hover:bg-primary/10", "text-on-surface");
+        btn.innerHTML = `<span class="material-symbols-outlined text-base">add_shopping_cart</span> Agregar a Carrito`;
+    }
 }
 
 function closeModal() {

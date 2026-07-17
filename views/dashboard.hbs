@@ -5,6 +5,7 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>NYX — Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400..900;1,400..900&family=Manrope:wght@200..800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block" rel="stylesheet"/>
 <style>
     * { box-sizing: border-box; }
     body {
@@ -343,7 +344,7 @@
         display: none;
     }
 
-    .edit-btn {
+    .text-btn {
         background: transparent;
         border: 1px solid rgba(255, 255, 255, 0.15);
         color: #c9c5cb;
@@ -355,9 +356,38 @@
         text-transform: uppercase;
         cursor: pointer;
     }
-    .edit-btn:hover {
+    .text-btn:hover {
+        border-color: #ffb4ab;
+        color: #ffb4ab;
+    }
+    .row-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .icon-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 9999px;
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #c9c5cb;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        padding: 0;
+    }
+    .icon-btn .material-symbols-outlined {
+        font-size: 16px;
+    }
+    .icon-btn.edit-btn:hover {
         border-color: #cdbefb;
         color: #cdbefb;
+    }
+    .icon-btn.delete-btn:hover {
+        border-color: #ffb4ab;
+        color: #ffb4ab;
     }
 
     .gender-badge {
@@ -381,38 +411,21 @@
         border-color: rgba(230, 107, 168, 0.4);
     }
 
-    .stock-badge {
-        display: inline-block;
-        font-size: 11px;
+    .stock-check {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
         font-weight: 700;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
+        color: #8fe0a8;
+        background: rgba(143, 224, 168, 0.12);
         padding: 5px 12px;
         border-radius: 9999px;
     }
-    .stock-badge.yes {
-        background: rgba(143, 224, 168, 0.15);
-        color: #8fe0a8;
-    }
-    .stock-badge.no {
-        background: rgba(255, 180, 171, 0.15);
-        color: #ffb4ab;
+    .stock-check .material-symbols-outlined {
+        font-size: 15px;
     }
 
-    .checkbox-field {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    .checkbox-field input[type="checkbox"] {
-        width: 18px;
-        height: 18px;
-        accent-color: #cdbefb;
-        cursor: pointer;
-    }
-    .checkbox-field label {
-        margin: 0;
-    }
 
     .autocomplete {
         position: relative;
@@ -502,6 +515,7 @@
 <main>
 <div class="tabs">
     <button class="tab-btn" data-tab="inventario">Inventario</button>
+    <button class="tab-btn" data-tab="catalogo">Catálogo</button>
     <button class="tab-btn" data-tab="marcas">Marcas</button>
     {{#if isAdmin}}
     <button class="tab-btn" data-tab="usuarios">Usuarios</button>
@@ -512,18 +526,19 @@
     {{#if perfumeMsg}}<p class="success">{{perfumeMsg}}</p>{{/if}}
     {{#if perfumeError}}<p class="error">{{perfumeError}}</p>{{/if}}
     <div class="panel-header">
-        <h2>Perfumes</h2>
-        <button class="primary-btn" id="openPerfumeModal">+ Add Perfume</button>
+        <h2>Inventario</h2>
+        <button class="primary-btn open-perfume-modal-btn">+ Add Perfume</button>
     </div>
+    <p style="font-size:12px;color:#6e6a72;margin-top:-14px;margin-bottom:20px;">Perfumes actualmente en stock. Acá se agregan, editan y eliminan.</p>
 
     <div class="table-controls">
         <div class="field table-search">
-            <label for="perfumeFilter">Buscar</label>
-            <input id="perfumeFilter" type="text" placeholder="Nombre, marca, modelo o género..."/>
+            <label for="inventarioFilter">Buscar</label>
+            <input id="inventarioFilter" type="text" placeholder="Marca, modelo o género..."/>
         </div>
         <div class="field">
-            <label for="pageSize">Filas por página</label>
-            <select id="pageSize">
+            <label for="inventarioPageSize">Filas por página</label>
+            <select id="inventarioPageSize">
                 <option value="10">10</option>
                 <option value="40">40</option>
                 <option value="100">100</option>
@@ -535,15 +550,55 @@
         <thead>
         <tr><th>Photo</th><th>Marca</th><th>Modelo</th><th>Género</th><th>En Stock</th><th>Notes</th><th>Description</th><th></th></tr>
         </thead>
-        <tbody id="perfumesTableBody"></tbody>
+        <tbody id="inventarioTableBody"></tbody>
     </table>
 
     <div class="pagination">
-        <span id="paginationSummary"></span>
+        <span id="inventarioSummary"></span>
         <div>
-            <button type="button" class="pagination-btn" id="prevPageBtn">&larr; Anterior</button>
-            <span id="pageIndicator"></span>
-            <button type="button" class="pagination-btn" id="nextPageBtn">Siguiente &rarr;</button>
+            <button type="button" class="pagination-btn" id="inventarioPrevBtn">&larr; Anterior</button>
+            <span id="inventarioIndicator"></span>
+            <button type="button" class="pagination-btn" id="inventarioNextBtn">Siguiente &rarr;</button>
+        </div>
+    </div>
+</section>
+
+<section id="catalogo" class="tab-panel">
+    {{#if perfumeMsg}}<p class="success">{{perfumeMsg}}</p>{{/if}}
+    {{#if perfumeError}}<p class="error">{{perfumeError}}</p>{{/if}}
+    <div class="panel-header">
+        <h2>Catálogo</h2>
+    </div>
+    <p style="font-size:12px;color:#6e6a72;margin-top:-14px;margin-bottom:20px;">Todos los perfumes de Inventario. Acá solo se ajusta la cantidad en stock.</p>
+
+    <div class="table-controls">
+        <div class="field table-search">
+            <label for="catalogoFilter">Buscar</label>
+            <input id="catalogoFilter" type="text" placeholder="Marca, modelo o género..."/>
+        </div>
+        <div class="field">
+            <label for="catalogoPageSize">Filas por página</label>
+            <select id="catalogoPageSize">
+                <option value="10">10</option>
+                <option value="40">40</option>
+                <option value="100">100</option>
+            </select>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+        <tr><th>Photo</th><th>Marca</th><th>Modelo</th><th>Género</th><th>En Stock</th><th></th></tr>
+        </thead>
+        <tbody id="catalogoTableBody"></tbody>
+    </table>
+
+    <div class="pagination">
+        <span id="catalogoSummary"></span>
+        <div>
+            <button type="button" class="pagination-btn" id="catalogoPrevBtn">&larr; Anterior</button>
+            <span id="catalogoIndicator"></span>
+            <button type="button" class="pagination-btn" id="catalogoNextBtn">Siguiente &rarr;</button>
         </div>
     </div>
 </section>
@@ -590,7 +645,7 @@
                 <td>{{this.created_at}}</td>
                 <td>
                     <form action="/dashboard/brands/{{this.id}}/delete" method="POST" onsubmit="return confirm('¿Eliminar esta marca?');">
-                        <button type="submit" class="edit-btn">Eliminar</button>
+                        <button type="submit" class="text-btn">Eliminar</button>
                     </form>
                 </td>
             </tr>
@@ -664,9 +719,9 @@
                 </select>
             </div>
         </div>
-        <div class="checkbox-field">
-            <input id="perfumeInStock" name="inStock" type="checkbox" checked/>
-            <label for="perfumeInStock">En stock</label>
+        <div class="field" style="max-width:160px;">
+            <label for="perfumeStockQuantity">Cantidad en stock</label>
+            <input id="perfumeStockQuantity" name="stockQuantity" type="number" min="0" step="1" value="1"/>
         </div>
         <div class="field">
             <label>Photo</label>
@@ -700,6 +755,22 @@
             <button type="submit" class="primary-btn" id="perfumeSubmitBtn">Save</button>
         </div>
     </form>
+</div>
+
+<!-- Catálogo: quantity-only edit -->
+<div class="modal-overlay hidden" id="catalogQuantityModal">
+    <div class="modal-form" style="max-width:360px;">
+        <h3>Editar cantidad</h3>
+        <p id="catalogQuantityPerfumeName" style="font-size:14px;color:#c9c5cb;margin:0 0 16px;"></p>
+        <div class="field">
+            <label for="catalogQuantityInput">Cantidad en stock</label>
+            <input id="catalogQuantityInput" type="number" min="0" step="1"/>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="cancel-btn" id="closeCatalogQuantityModal">Cancel</button>
+            <button type="button" class="primary-btn" id="catalogQuantitySubmitBtn">Guardar</button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -755,7 +826,7 @@
         document.getElementById("perfumeBrand").value = perfume.brand || "";
         document.getElementById("perfumeModel").value = perfume.model || "";
         document.getElementById("perfumeGender").value = perfume.gender || "";
-        document.getElementById("perfumeInStock").checked = perfume.in_stock !== false;
+        document.getElementById("perfumeStockQuantity").value = perfume.stock_quantity ?? 0;
         document.getElementById("notesTop").value = perfume.notes_top || "";
         document.getElementById("notesMiddle").value = perfume.notes_middle || "";
         document.getElementById("notesBase").value = perfume.notes_base || "";
@@ -771,7 +842,9 @@
         perfumeModal.classList.remove("hidden");
     }
 
-    document.getElementById("openPerfumeModal").addEventListener("click", openModalForCreate);
+    document.querySelectorAll(".open-perfume-modal-btn").forEach((btn) => {
+        btn.addEventListener("click", openModalForCreate);
+    });
     document.getElementById("closePerfumeModal").addEventListener("click", () => {
         perfumeModal.classList.add("hidden");
     });
@@ -842,17 +915,8 @@
         }
     });
 
-    // ===== Perfumes table: filter + pagination =====
+    // ===== Perfumes tables: filter + pagination (Inventario = in-stock only, Catálogo = all) =====
     const ALL_PERFUMES = JSON.parse(document.getElementById("perfumesData").textContent || "[]");
-    const tableBody = document.getElementById("perfumesTableBody");
-    const filterInput = document.getElementById("perfumeFilter");
-    const pageSizeSelect = document.getElementById("pageSize");
-    const prevPageBtn = document.getElementById("prevPageBtn");
-    const nextPageBtn = document.getElementById("nextPageBtn");
-    const paginationSummary = document.getElementById("paginationSummary");
-    const pageIndicator = document.getElementById("pageIndicator");
-
-    let currentPage = 1;
 
     function escapeHtml(str) {
         if (str == null) return "";
@@ -870,77 +934,175 @@
         return "";
     }
 
-    function getFilteredPerfumes() {
-        const term = filterInput.value.trim().toLowerCase();
-        if (!term) return ALL_PERFUMES;
-        return ALL_PERFUMES.filter((p) =>
-            [p.brand, p.model, p.gender].some((f) => (f || "").toLowerCase().includes(term))
-        );
+    function deletePerfume(id) {
+        if (!confirm("¿Eliminar este perfume? Esta acción no se puede deshacer.")) return;
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = `/dashboard/perfumes/${id}/delete`;
+        document.body.appendChild(form);
+        form.submit();
     }
 
-    function renderTable() {
-        const pageSize = parseInt(pageSizeSelect.value, 10);
-        const filtered = getFilteredPerfumes();
-        const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-        currentPage = Math.min(currentPage, totalPages);
+    function submitQuantityUpdate(id, quantity) {
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = `/dashboard/perfumes/${id}/quantity`;
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "quantity";
+        input.value = quantity;
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+    }
 
-        const start = (currentPage - 1) * pageSize;
-        const pageItems = filtered.slice(start, start + pageSize);
+    // ===== Catálogo: quantity-only edit modal =====
+    const catalogQuantityModal = document.getElementById("catalogQuantityModal");
+    const catalogQuantityPerfumeName = document.getElementById("catalogQuantityPerfumeName");
+    const catalogQuantityInput = document.getElementById("catalogQuantityInput");
+    const catalogQuantitySubmitBtn = document.getElementById("catalogQuantitySubmitBtn");
+    let catalogQuantityEditId = null;
 
-        tableBody.innerHTML = "";
+    function openCatalogQuantityModal(perfume) {
+        catalogQuantityEditId = perfume.id;
+        catalogQuantityPerfumeName.textContent = `${perfume.brand || ""} — ${perfume.model || ""}`;
+        catalogQuantityInput.value = perfume.stock_quantity ?? 0;
+        catalogQuantityModal.classList.remove("hidden");
+    }
 
-        if (pageItems.length === 0) {
-            tableBody.innerHTML = `<tr class="empty-row"><td colspan="8">No perfumes match.</td></tr>`;
-        } else {
-            pageItems.forEach((p) => {
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td>${p.image_url ? `<img src="${escapeHtml(p.image_url)}" alt="${escapeHtml(p.model)}"/>` : `<div class="no-photo">N/A</div>`}</td>
-                    <td>${escapeHtml(p.brand)}</td>
-                    <td>${escapeHtml(p.model)}</td>
-                    <td>${p.gender ? `<span class="gender-badge ${escapeHtml(p.gender)}">${escapeHtml(genderLabel(p.gender))}</span>` : ""}</td>
-                    <td><span class="stock-badge ${p.in_stock ? "yes" : "no"}">${p.in_stock ? "Sí" : "No"}</span></td>
-                    <td>Top: ${escapeHtml(p.notes_top)}<br/>Middle: ${escapeHtml(p.notes_middle)}<br/>Base: ${escapeHtml(p.notes_base)}</td>
-                    <td>${escapeHtml(p.description)}</td>
-                    <td><button type="button" class="edit-btn" data-id="${escapeHtml(p.id)}">Editar</button></td>
-                `;
-                tableBody.appendChild(tr);
-            });
+    document.getElementById("closeCatalogQuantityModal").addEventListener("click", () => {
+        catalogQuantityModal.classList.add("hidden");
+    });
+    catalogQuantityModal.addEventListener("click", (e) => {
+        if (e.target === catalogQuantityModal) catalogQuantityModal.classList.add("hidden");
+    });
+    catalogQuantitySubmitBtn.addEventListener("click", () => {
+        if (!catalogQuantityEditId) return;
+        submitQuantityUpdate(catalogQuantityEditId, catalogQuantityInput.value);
+    });
+
+    function createPerfumeTable({ idPrefix, filterSource, compact, mode }) {
+        const tableBody = document.getElementById(`${idPrefix}TableBody`);
+        const filterInput = document.getElementById(`${idPrefix}Filter`);
+        const pageSizeSelect = document.getElementById(`${idPrefix}PageSize`);
+        const prevBtn = document.getElementById(`${idPrefix}PrevBtn`);
+        const nextBtn = document.getElementById(`${idPrefix}NextBtn`);
+        const summary = document.getElementById(`${idPrefix}Summary`);
+        const indicator = document.getElementById(`${idPrefix}Indicator`);
+        const colCount = compact ? 6 : 8;
+
+        let currentPage = 1;
+
+        function getFiltered() {
+            const source = filterSource ? ALL_PERFUMES.filter(filterSource) : ALL_PERFUMES;
+            const term = filterInput.value.trim().toLowerCase();
+            if (!term) return source;
+            return source.filter((p) =>
+                [p.brand, p.model, p.gender].some((f) => (f || "").toLowerCase().includes(term))
+            );
         }
 
-        tableBody.querySelectorAll(".edit-btn").forEach((btn) => {
-            btn.addEventListener("click", () => {
-                const perfume = ALL_PERFUMES.find((p) => p.id === btn.dataset.id);
-                if (perfume) openModalForEdit(perfume);
+        function render() {
+            const pageSize = parseInt(pageSizeSelect.value, 10);
+            const filtered = getFiltered();
+            const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+            currentPage = Math.min(currentPage, totalPages);
+
+            const start = (currentPage - 1) * pageSize;
+            const pageItems = filtered.slice(start, start + pageSize);
+
+            tableBody.innerHTML = "";
+
+            if (pageItems.length === 0) {
+                tableBody.innerHTML = `<tr class="empty-row"><td colspan="${colCount}">No hay perfumes.</td></tr>`;
+            } else {
+                pageItems.forEach((p) => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td>${p.image_url ? `<img src="${escapeHtml(p.image_url)}" alt="${escapeHtml(p.model)}"/>` : `<div class="no-photo">N/A</div>`}</td>
+                        <td>${escapeHtml(p.brand)}</td>
+                        <td>${escapeHtml(p.model)}</td>
+                        <td>${p.gender ? `<span class="gender-badge ${escapeHtml(p.gender)}">${escapeHtml(genderLabel(p.gender))}</span>` : ""}</td>
+                        <td>${p.stock_quantity >= 1 ? `<span class="stock-check"><span class="material-symbols-outlined">check_circle</span>${p.stock_quantity}</span>` : ""}</td>
+                        ${
+                            compact
+                                ? ""
+                                : `<td>Top: ${escapeHtml(p.notes_top)}<br/>Middle: ${escapeHtml(p.notes_middle)}<br/>Base: ${escapeHtml(p.notes_base)}</td>
+                                   <td>${escapeHtml(p.description)}</td>`
+                        }
+                        <td class="row-actions">
+                            <button type="button" class="icon-btn edit-btn" data-id="${escapeHtml(p.id)}" aria-label="Editar" title="Editar">
+                                <span class="material-symbols-outlined">edit</span>
+                            </button>
+                            ${
+                                mode === "catalog"
+                                    ? ""
+                                    : `<button type="button" class="icon-btn delete-btn" data-id="${escapeHtml(p.id)}" aria-label="Eliminar" title="Eliminar">
+                                        <span class="material-symbols-outlined">delete</span>
+                                       </button>`
+                            }
+                        </td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+            }
+
+            tableBody.querySelectorAll(".edit-btn").forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    const perfume = ALL_PERFUMES.find((p) => p.id === btn.dataset.id);
+                    if (!perfume) return;
+                    if (mode === "catalog") {
+                        openCatalogQuantityModal(perfume);
+                    } else {
+                        openModalForEdit(perfume);
+                    }
+                });
             });
+            tableBody.querySelectorAll(".delete-btn").forEach((btn) => {
+                btn.addEventListener("click", () => deletePerfume(btn.dataset.id));
+            });
+
+            const rangeStart = filtered.length === 0 ? 0 : start + 1;
+            const rangeEnd = Math.min(start + pageSize, filtered.length);
+            summary.textContent = `Mostrando ${rangeStart}-${rangeEnd} de ${filtered.length}`;
+            indicator.textContent = `Página ${currentPage} de ${totalPages}`;
+            prevBtn.disabled = currentPage <= 1;
+            nextBtn.disabled = currentPage >= totalPages;
+        }
+
+        filterInput.addEventListener("input", () => {
+            currentPage = 1;
+            render();
+        });
+        pageSizeSelect.addEventListener("change", () => {
+            currentPage = 1;
+            render();
+        });
+        prevBtn.addEventListener("click", () => {
+            currentPage -= 1;
+            render();
+        });
+        nextBtn.addEventListener("click", () => {
+            currentPage += 1;
+            render();
         });
 
-        const rangeStart = filtered.length === 0 ? 0 : start + 1;
-        const rangeEnd = Math.min(start + pageSize, filtered.length);
-        paginationSummary.textContent = `Mostrando ${rangeStart}-${rangeEnd} de ${filtered.length}`;
-        pageIndicator.textContent = `Página ${currentPage} de ${totalPages}`;
-        prevPageBtn.disabled = currentPage <= 1;
-        nextPageBtn.disabled = currentPage >= totalPages;
+        return { render };
     }
 
-    filterInput.addEventListener("input", () => {
-        currentPage = 1;
-        renderTable();
+    const inventarioTable = createPerfumeTable({
+        idPrefix: "inventario",
+        filterSource: (p) => p.stock_quantity >= 1,
+        mode: "full"
     });
-    pageSizeSelect.addEventListener("change", () => {
-        currentPage = 1;
-        renderTable();
-    });
-    prevPageBtn.addEventListener("click", () => {
-        currentPage -= 1;
-        renderTable();
-    });
-    nextPageBtn.addEventListener("click", () => {
-        currentPage += 1;
-        renderTable();
+    const catalogoTable = createPerfumeTable({
+        idPrefix: "catalogo",
+        compact: true,
+        mode: "catalog"
     });
 
-    renderTable();
+    inventarioTable.render();
+    catalogoTable.render();
 </script>
 
 </body>

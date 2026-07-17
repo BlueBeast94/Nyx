@@ -227,7 +227,7 @@ app.post("/dashboard/users", requireAuth, requireAdmin, async (req, res) => {
 });
 
 app.post("/dashboard/perfumes", requireAuth, upload.single("photo"), async (req, res) => {
-    const { brand, model, gender, inStock, notesTop, notesMiddle, notesBase, description } = req.body;
+    const { brand, model, gender, stockQuantity, notesTop, notesMiddle, notesBase, description } = req.body;
 
     let imageUrl = null;
     if (req.file) {
@@ -243,7 +243,7 @@ app.post("/dashboard/perfumes", requireAuth, upload.single("photo"), async (req,
         brand,
         model,
         gender: gender || null,
-        in_stock: inStock === "on",
+        stock_quantity: Math.max(0, parseInt(stockQuantity, 10) || 0),
         image_url: imageUrl,
         notes_top: notesTop,
         notes_middle: notesMiddle,
@@ -262,14 +262,14 @@ app.post("/dashboard/perfumes", requireAuth, upload.single("photo"), async (req,
 
 app.post("/dashboard/perfumes/:id", requireAuth, upload.single("photo"), async (req, res) => {
     const { id } = req.params;
-    const { brand, model, gender, inStock, notesTop, notesMiddle, notesBase, description } = req.body;
+    const { brand, model, gender, stockQuantity, notesTop, notesMiddle, notesBase, description } = req.body;
 
     const updates = {
         name: model || brand || "Sin nombre",
         brand,
         model,
         gender: gender || null,
-        in_stock: inStock === "on",
+        stock_quantity: Math.max(0, parseInt(stockQuantity, 10) || 0),
         notes_top: notesTop,
         notes_middle: notesMiddle,
         notes_base: notesBase,
@@ -293,6 +293,32 @@ app.post("/dashboard/perfumes/:id", requireAuth, upload.single("photo"), async (
     await ensureBrandExists(brand);
 
     res.redirect("/dashboard?perfumeMsg=Perfume actualizado#inventario");
+});
+
+app.post("/dashboard/perfumes/:id/delete", requireAuth, async (req, res) => {
+    const { error } = await supabaseAdmin.from("perfumes").delete().eq("id", req.params.id);
+
+    if (error) {
+        return res.redirect(`/dashboard?perfumeError=${encodeURIComponent(error.message)}#inventario`);
+    }
+
+    res.redirect("/dashboard?perfumeMsg=Perfume eliminado#inventario");
+});
+
+// Catálogo's quantity-only edit — updates stock_quantity without touching the rest of the perfume.
+app.post("/dashboard/perfumes/:id/quantity", requireAuth, async (req, res) => {
+    const { quantity } = req.body;
+
+    const { error } = await supabaseAdmin
+        .from("perfumes")
+        .update({ stock_quantity: Math.max(0, parseInt(quantity, 10) || 0) })
+        .eq("id", req.params.id);
+
+    if (error) {
+        return res.redirect(`/dashboard?perfumeError=${encodeURIComponent(error.message)}#catalogo`);
+    }
+
+    res.redirect("/dashboard?perfumeMsg=Cantidad actualizada#catalogo");
 });
 
 app.post("/dashboard/brands", requireAuth, async (req, res) => {
