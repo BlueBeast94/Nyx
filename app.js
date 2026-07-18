@@ -16,7 +16,14 @@ function transformPerfume(row) {
         base: splitNotes(row.notes_base)
     };
     const tags = [...new Set([...notes.top, ...notes.middle, ...notes.base])].slice(0, 3);
-    const categories = row.gender === "masculino" ? ["Men"] : row.gender === "femenino" ? ["Women"] : [];
+    const categories =
+        row.gender === "masculino"
+            ? ["Men"]
+            : row.gender === "femenino"
+              ? ["Women"]
+              : row.gender === "unisex"
+                ? ["Unisex"]
+                : [];
 
     return {
         id: row.id,
@@ -25,7 +32,7 @@ function transformPerfume(row) {
         model: row.model,
         gender: row.gender,
         description: row.description,
-        categories, // Luxury Collection/Oriental/Unisex still have no data source yet
+        categories, // Luxury Collection/Oriental still have no data source yet
         tags,
         notes,
         price: row.price ?? null, // not collected by the dashboard yet
@@ -162,7 +169,7 @@ function render() {
                 ${
                     p.inStock !== false
                         ? `<div class="flex justify-end pt-1">
-                            <button type="button" class="add-to-cart-btn w-8 h-8 rounded-full bg-white/5 border border-white/15 flex items-center justify-center text-on-surface hover:bg-primary hover:border-primary hover:text-on-primary transition-colors" aria-label="Agregar a carrito">
+                            <button type="button" class="add-to-cart-btn w-8 h-8 rounded-full bg-white/5 border border-white/15 flex items-center justify-center text-on-surface hover:bg-primary hover:border-primary hover:text-on-primary transition-colors" data-id="${escapeHtml(p.id)}" aria-label="Agregar a carrito">
                                 <span class="material-symbols-outlined text-[17px]">add_shopping_cart</span>
                             </button>
                           </div>`
@@ -244,6 +251,10 @@ function openModal(p) {
             addToCart(p.id);
             showToast("Agregado al carrito");
             setModalAddToCartState(modalAddBtn, true);
+
+            // Keep the card behind the modal in sync too — it's a separate element that won't update on its own.
+            const cardBtn = grid.querySelector(`.add-to-cart-btn[data-id="${p.id}"]`);
+            if (cardBtn) setCartButtonState(cardBtn, true);
         });
     }
 }

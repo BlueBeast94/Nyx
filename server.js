@@ -100,6 +100,22 @@ function parseCsvBrands(text) {
         .filter((name) => name && !/^(name|marca|brand)$/i.test(name));
 }
 
+// Reads "Brand,Perfume Name" rows for the reference perfume list. Skips a header row.
+function parseCsvBrandPerfumes(text) {
+    return text
+        .split(/\r?\n/)
+        .map((line) => line.split(","))
+        .filter((cols) => cols.length >= 2)
+        .map(([brand, name]) => ({
+            brand: brand.trim().replace(/^"|"$/g, ""),
+            name: name.trim().replace(/^"|"$/g, "")
+        }))
+        .filter(
+            ({ brand, name }) =>
+                brand && name && !(/^(brand|marca)$/i.test(brand) && /^(name|nombre|perfume|modelo)$/i.test(name))
+        );
+}
+
 async function getSessionUser(req) {
     const token = req.cookies["sb-access-token"];
     if (!token) return null;
@@ -183,6 +199,11 @@ app.get("/dashboard", requireAuth, async (req, res) => {
         .order("created_at", { ascending: false });
 
     const { data: brands } = await supabaseAdmin.from("brands").select("*").order("name");
+    const { data: referencePerfumes } = await supabaseAdmin
+        .from("reference_perfumes")
+        .select("*")
+        .order("brand")
+        .order("name");
 
     let users = [];
     if (req.profile.role === "admin") {
@@ -196,6 +217,7 @@ app.get("/dashboard", requireAuth, async (req, res) => {
         isAdmin: req.profile.role === "admin",
         perfumes: perfumes || [],
         brands: brands || [],
+        referencePerfumes: referencePerfumes || [],
         users,
         userMsg: req.query.userMsg,
         userError: req.query.userError,
@@ -385,6 +407,68 @@ app.post("/dashboard/brands/:id/delete", requireAuth, async (req, res) => {
         return res.redirect(`/dashboard?brandError=${encodeURIComponent(error.message)}#marcas`);
     }
     res.redirect("/dashboard?brandMsg=Marca eliminada#marcas");
+});
+
+// Reference list of known perfume names per brand — used to auto-suggest "Modelo" when adding a perfume.
+app.post("/dashboard/reference-perfumes", requireAuth, async (req, res) => {
+    const brand = (req.body.brand || "").trim();
+    const name = (req.body.name || "").trim();
+
+    if (!brand || !name) {
+        return res.redirect("/dashboard?brandError=Marca y nombre son obligatorios#modelos");
+    }
+
+    const { error } = await supabaseAdmin.from("reference_perfumes").insert({ brand, name });
+    if (error) {
+        return res.redirect(`/dashboard?brandError=${encodeURIComponent(error.message)}#modelos`);
+    }
+
+    res.redirect("/dashboard?brandMsg=Perfume de referencia agregado#modelos");
+});
+
+app.post("/dashboard/reference-perfumes/import", requireAuth, upload.single("file"), async (req, res) => {
+    if (!req.file) {
+        return res.redirect("/dashboard?brandError=Seleccioná un archivo CSV#modelos");
+    }
+
+    const rows = parseCsvBrandPerfumes(req.file.buffer.toString("utf-8"));
+    if (rows.length === 0) {
+        return res.redirect("/dashboard?brandError=El archivo no tiene filas válidas (Marca,Nombre)#modelos");
+    }
+
+    // Dedupe within the file itself, case-insensitively.
+    const seen = new Map();
+    for (const row of rows) {
+        const key = `${row.brand.toLowerCase()}||${row.name.toLowerCase()}`;
+        if (!seen.has(key)) seen.set(key, row);
+    }
+
+    // Skip pairs that already exist in the database.
+    const { data: existing } = await supabaseAdmin.from("reference_perfumes").select("brand, name");
+    const existingKeys = new Set((existing || []).map((r) => `${r.brand.toLowerCase()}||${r.name.toLowerCase()}`));
+
+    const toInsert = [...seen.values()].filter(
+        (row) => !existingKeys.has(`${row.brand.toLowerCase()}||${row.name.toLowerCase()}`)
+    );
+
+    if (toInsert.length === 0) {
+        return res.redirect("/dashboard?brandMsg=No hay perfumes de referencia nuevos para agregar#modelos");
+    }
+
+    const { error } = await supabaseAdmin.from("reference_perfumes").insert(toInsert);
+    if (error) {
+        return res.redirect(`/dashboard?brandError=${encodeURIComponent(error.message)}#modelos`);
+    }
+
+    res.redirect(`/dashboard?brandMsg=${encodeURIComponent(`${toInsert.length} perfumes de referencia nuevos agregados`)}#modelos`);
+});
+
+app.post("/dashboard/reference-perfumes/:id/delete", requireAuth, async (req, res) => {
+    const { error } = await supabaseAdmin.from("reference_perfumes").delete().eq("id", req.params.id);
+    if (error) {
+        return res.redirect(`/dashboard?brandError=${encodeURIComponent(error.message)}#modelos`);
+    }
+    res.redirect("/dashboard?brandMsg=Perfume de referencia eliminado#modelos");
 });
 
 // Public, read-only — powers the storefront grid on the home page.

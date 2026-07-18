@@ -15,12 +15,14 @@ function escapeHtml(str) {
 function genderLabel(gender) {
     if (gender === "masculino") return "Masculino";
     if (gender === "femenino") return "Femenino";
+    if (gender === "unisex") return "Unisex";
     return "";
 }
 
 function genderBadgeClasses(gender) {
     if (gender === "masculino") return "bg-blue-500/25 text-blue-200";
     if (gender === "femenino") return "bg-pink-500/25 text-pink-200";
+    if (gender === "unisex") return "bg-purple-500/25 text-purple-200";
     return "bg-black/50 text-white";
 }
 

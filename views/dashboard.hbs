@@ -410,6 +410,11 @@
         color: #f08fc0;
         border-color: rgba(230, 107, 168, 0.4);
     }
+    .gender-badge.unisex {
+        background: rgba(180, 140, 230, 0.18);
+        color: #c9a8f0;
+        border-color: rgba(180, 140, 230, 0.4);
+    }
 
     .stock-check {
         display: inline-flex;
@@ -517,6 +522,7 @@
     <button class="tab-btn" data-tab="inventario">Inventario</button>
     <button class="tab-btn" data-tab="catalogo">Catálogo</button>
     <button class="tab-btn" data-tab="marcas">Marcas</button>
+    <button class="tab-btn" data-tab="modelos">Modelos</button>
     {{#if isAdmin}}
     <button class="tab-btn" data-tab="usuarios">Usuarios</button>
     {{/if}}
@@ -656,6 +662,55 @@
     </table>
 </section>
 
+<section id="modelos" class="tab-panel">
+    {{#if brandMsg}}<p class="success">{{brandMsg}}</p>{{/if}}
+    {{#if brandError}}<p class="error">{{brandError}}</p>{{/if}}
+    <div class="panel-header">
+        <h2>Modelos</h2>
+    </div>
+    <p style="font-size:12px;color:#6e6a72;margin-top:-14px;margin-bottom:24px;">Lista de qué perfumes tiene cada marca (ej: Dior → J'adore, Sauvage...). Se usa para sugerir el "Modelo" al agregar un perfume en Inventario.</p>
+
+    <form action="/dashboard/reference-perfumes" method="POST" class="inline-form">
+        <div class="field autocomplete">
+            <label for="refBrandInput">Marca</label>
+            <input id="refBrandInput" name="brand" type="text" placeholder="Ej: Dior" autocomplete="off" required/>
+            <div class="autocomplete-list hidden" id="refBrandSuggestions"></div>
+        </div>
+        <div class="field">
+            <label for="refNameInput">Nombre del perfume</label>
+            <input id="refNameInput" name="name" type="text" placeholder="Ej: Sauvage" required/>
+        </div>
+        <button type="submit" class="primary-btn">Agregar</button>
+    </form>
+
+    <form action="/dashboard/reference-perfumes/import" method="POST" enctype="multipart/form-data" class="inline-form">
+        <div class="field">
+            <label>Importar CSV</label>
+            <div class="file-picker">
+                <button type="button" class="file-picker-btn" id="refCsvPickerBtn">📄 Elegir archivo CSV</button>
+                <span class="file-picker-name" id="refCsvFileName">Sin archivo seleccionado</span>
+                <input id="refCsvFile" name="file" type="file" accept=".csv,text/csv" required/>
+            </div>
+        </div>
+        <button type="submit" class="primary-btn">Importar</button>
+    </form>
+    <p style="font-size:12px;color:#6e6a72;margin-top:-16px;margin-bottom:24px;">Formato: una fila por línea, "Marca,Nombre" (ej: Dior,Sauvage). Los pares que ya existen se omiten.</p>
+
+    <div class="field table-search" style="max-width:320px;margin-bottom:16px;">
+        <label for="refFilterInput">Buscar</label>
+        <input id="refFilterInput" type="text" placeholder="Marca o nombre..."/>
+    </div>
+
+    <table>
+        <thead>
+        <tr><th>Marca</th><th>Nombre</th><th></th></tr>
+        </thead>
+        <tbody id="referencePerfumesTableBody"></tbody>
+    </table>
+</section>
+
+<script id="referencePerfumesData" type="application/json">{{{json referencePerfumes}}}</script>
+
 {{#if isAdmin}}
 <section id="usuarios" class="tab-panel">
     {{#if userMsg}}<p class="success">{{userMsg}}</p>{{/if}}
@@ -706,9 +761,10 @@
                 <input id="perfumeBrand" name="brand" type="text" autocomplete="off" required/>
                 <div class="autocomplete-list hidden" id="brandSuggestions"></div>
             </div>
-            <div class="field">
+            <div class="field autocomplete">
                 <label for="perfumeModel">Modelo</label>
-                <input id="perfumeModel" name="model" type="text" required/>
+                <input id="perfumeModel" name="model" type="text" autocomplete="off" required/>
+                <div class="autocomplete-list hidden" id="modelSuggestions"></div>
             </div>
             <div class="field">
                 <label for="perfumeGender">Género</label>
@@ -716,6 +772,7 @@
                     <option value="">— Elegir género —</option>
                     <option value="masculino">♂ Masculino</option>
                     <option value="femenino">♀ Femenino</option>
+                    <option value="unisex">⚥ Unisex</option>
                 </select>
             </div>
         </div>
@@ -915,6 +972,138 @@
         }
     });
 
+    // ===== Modelo autocomplete — suggests known perfume names for whatever Marca is typed =====
+    const REFERENCE_PERFUMES = JSON.parse(document.getElementById("referencePerfumesData").textContent || "[]");
+    const modelInput = document.getElementById("perfumeModel");
+    const modelSuggestions = document.getElementById("modelSuggestions");
+
+    function showModelSuggestions() {
+        const brandTerm = brandInput.value.trim().toLowerCase();
+        const modelTerm = modelInput.value.trim().toLowerCase();
+
+        if (!brandTerm) {
+            modelSuggestions.classList.add("hidden");
+            return;
+        }
+
+        let matches = REFERENCE_PERFUMES.filter((rp) => rp.brand.toLowerCase().includes(brandTerm));
+        if (modelTerm) {
+            matches = matches.filter((rp) => rp.name.toLowerCase().includes(modelTerm));
+        }
+
+        if (matches.length === 0) {
+            modelSuggestions.classList.add("hidden");
+            return;
+        }
+
+        modelSuggestions.innerHTML = matches
+            .slice(0, 20)
+            .map((rp) => `<div class="autocomplete-option">${escapeHtml(rp.name)}</div>`)
+            .join("");
+        modelSuggestions.classList.remove("hidden");
+    }
+
+    modelInput.addEventListener("focus", showModelSuggestions);
+    modelInput.addEventListener("input", showModelSuggestions);
+    brandInput.addEventListener("input", showModelSuggestions);
+    modelSuggestions.addEventListener("click", (e) => {
+        if (!e.target.classList.contains("autocomplete-option")) return;
+        modelInput.value = e.target.textContent;
+        modelSuggestions.classList.add("hidden");
+    });
+    document.addEventListener("click", (e) => {
+        if (e.target !== modelInput && !modelSuggestions.contains(e.target)) {
+            modelSuggestions.classList.add("hidden");
+        }
+    });
+
+    // ===== Marcas tab: reference perfumes (add form autocomplete + CSV picker + filterable table) =====
+    const refBrandInput = document.getElementById("refBrandInput");
+    const refBrandSuggestions = document.getElementById("refBrandSuggestions");
+
+    function showRefBrandSuggestions() {
+        const term = refBrandInput.value.trim().toLowerCase();
+        const matches = term ? ALL_BRANDS.filter((name) => name.toLowerCase().includes(term)) : ALL_BRANDS;
+
+        if (matches.length === 0) {
+            refBrandSuggestions.classList.add("hidden");
+            return;
+        }
+
+        refBrandSuggestions.innerHTML = matches
+            .slice(0, 20)
+            .map((name) => `<div class="autocomplete-option">${escapeHtml(name)}</div>`)
+            .join("");
+        refBrandSuggestions.classList.remove("hidden");
+    }
+
+    refBrandInput.addEventListener("focus", showRefBrandSuggestions);
+    refBrandInput.addEventListener("input", showRefBrandSuggestions);
+    refBrandSuggestions.addEventListener("click", (e) => {
+        if (!e.target.classList.contains("autocomplete-option")) return;
+        refBrandInput.value = e.target.textContent;
+        refBrandSuggestions.classList.add("hidden");
+    });
+    document.addEventListener("click", (e) => {
+        if (e.target !== refBrandInput && !refBrandSuggestions.contains(e.target)) {
+            refBrandSuggestions.classList.add("hidden");
+        }
+    });
+
+    const refCsvPickerBtn = document.getElementById("refCsvPickerBtn");
+    const refCsvFileInput = document.getElementById("refCsvFile");
+    const refCsvFileName = document.getElementById("refCsvFileName");
+
+    refCsvPickerBtn.addEventListener("click", () => refCsvFileInput.click());
+    refCsvFileInput.addEventListener("change", () => {
+        refCsvFileName.textContent = refCsvFileInput.files[0] ? refCsvFileInput.files[0].name : "Sin archivo seleccionado";
+    });
+
+    const refTableBody = document.getElementById("referencePerfumesTableBody");
+    const refFilterInput = document.getElementById("refFilterInput");
+
+    function renderReferencePerfumes() {
+        const term = refFilterInput.value.trim().toLowerCase();
+        const filtered = term
+            ? REFERENCE_PERFUMES.filter(
+                  (rp) => rp.brand.toLowerCase().includes(term) || rp.name.toLowerCase().includes(term)
+              )
+            : REFERENCE_PERFUMES;
+
+        refTableBody.innerHTML = "";
+
+        if (filtered.length === 0) {
+            refTableBody.innerHTML = `<tr class="empty-row"><td colspan="3">No hay perfumes de referencia.</td></tr>`;
+            return;
+        }
+
+        filtered.forEach((rp) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${escapeHtml(rp.brand)}</td>
+                <td>${escapeHtml(rp.name)}</td>
+                <td>
+                    <button type="button" class="text-btn ref-delete-btn" data-id="${escapeHtml(rp.id)}">Eliminar</button>
+                </td>
+            `;
+            refTableBody.appendChild(tr);
+        });
+
+        refTableBody.querySelectorAll(".ref-delete-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                if (!confirm("¿Eliminar este perfume de referencia?")) return;
+                const form = document.createElement("form");
+                form.method = "POST";
+                form.action = `/dashboard/reference-perfumes/${btn.dataset.id}/delete`;
+                document.body.appendChild(form);
+                form.submit();
+            });
+        });
+    }
+
+    refFilterInput.addEventListener("input", renderReferencePerfumes);
+    renderReferencePerfumes();
+
     // ===== Perfumes tables: filter + pagination (Inventario = in-stock only, Catálogo = all) =====
     const ALL_PERFUMES = JSON.parse(document.getElementById("perfumesData").textContent || "[]");
 
@@ -931,6 +1120,7 @@
     function genderLabel(gender) {
         if (gender === "masculino") return "Masculino";
         if (gender === "femenino") return "Femenino";
+        if (gender === "unisex") return "Unisex";
         return "";
     }
 
