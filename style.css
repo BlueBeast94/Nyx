@@ -1,3 +1,178 @@
+/* ===== Chat Widget ===== */
+.chat-widget-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 92px;
+    width: 56px;
+    height: 56px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    z-index: 55;
+    color: white;
+    cursor: pointer;
+    transition: background 0.4s ease, border-color 0.4s ease, transform 0.4s ease, box-shadow 0.4s ease;
+}
+.chat-widget-btn:hover {
+    background: #cdbefb;
+    border-color: #cdbefb;
+    color: #1f1244;
+    transform: scale(1.12);
+    box-shadow: 0 10px 30px rgba(205, 190, 251, 0.5);
+}
+
+.chat-widget-panel {
+    position: fixed;
+    bottom: 92px;
+    right: 24px;
+    width: 320px;
+    max-width: calc(100vw - 48px);
+    height: 440px;
+    max-height: calc(100vh - 140px);
+    background: #1c1b1c;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    z-index: 56;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.chat-widget-panel.hidden {
+    display: none;
+}
+
+.chat-widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+}
+.chat-widget-title {
+    font-family: "Bodoni Moda", serif;
+    letter-spacing: 0.15em;
+    color: #e5e1e2;
+    font-size: 15px;
+}
+.chat-widget-header button {
+    background: none;
+    border: none;
+    color: #c9c5cb;
+    cursor: pointer;
+    display: flex;
+}
+
+.chat-widget-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-family: "Manrope", sans-serif;
+    font-size: 13px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(205, 190, 251, 0.4) transparent;
+}
+.chat-widget-messages::-webkit-scrollbar {
+    width: 6px;
+}
+.chat-widget-messages::-webkit-scrollbar-track {
+    background: transparent;
+}
+.chat-widget-messages::-webkit-scrollbar-thumb {
+    background: rgba(205, 190, 251, 0.4);
+    border-radius: 9999px;
+}
+.chat-widget-messages::-webkit-scrollbar-thumb:hover {
+    background: rgba(205, 190, 251, 0.7);
+}
+.chat-msg {
+    max-width: 85%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    line-height: 1.4;
+}
+.chat-msg.bot {
+    align-self: flex-start;
+    background: rgba(255, 255, 255, 0.06);
+    color: #e5e1e2;
+    border-bottom-left-radius: 4px;
+}
+.chat-msg.user {
+    align-self: flex-end;
+    background: #cdbefb;
+    color: #1f1244;
+    border-bottom-right-radius: 4px;
+}
+
+.chat-widget-input-area {
+    padding: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-shrink: 0;
+}
+.chat-option-btn {
+    width: 100%;
+    text-align: left;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.03);
+    color: #e5e1e2;
+    font-family: "Manrope", sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+.chat-option-btn:hover {
+    border-color: #cdbefb;
+    background: rgba(205, 190, 251, 0.08);
+}
+.chat-name-form {
+    display: flex;
+    gap: 8px;
+}
+.chat-name-form input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 9999px;
+    padding: 10px 14px;
+    color: #e5e1e2;
+    font-family: "Manrope", sans-serif;
+    font-size: 13px;
+}
+.chat-name-form input:focus {
+    outline: none;
+    border-color: #cdbefb;
+}
+.chat-name-form button {
+    background: #cdbefb;
+    color: #1f1244;
+    border: none;
+    border-radius: 9999px;
+    padding: 0 18px;
+    font-family: "Manrope", sans-serif;
+    font-weight: 700;
+    cursor: pointer;
+}
+.chat-menu-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+}
+
 /* ===== Toast ===== */
 .toast {
     position: fixed;

@@ -23,6 +23,12 @@ if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY || !process.env.
     );
 }
 
+// Optional — the chat widget's AI features (recommendations, free-text Q&A) degrade gracefully
+// with a clear error if this isn't set, rather than blocking the whole app from starting.
+if (!process.env.GROQ_API_KEY) {
+    console.warn("GROQ_API_KEY not set — the chat widget's AI features will return a friendly error until it is.");
+}
+
 // Used for user-facing auth (sign in) — respects RLS.
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 
@@ -48,6 +54,7 @@ app.set("view engine", "hbs");
 app.set("views", path.join(__dirname, "views"));
 
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(__dirname));
 
@@ -114,6 +121,52 @@ function parseCsvBrandPerfumes(text) {
             ({ brand, name }) =>
                 brand && name && !(/^(brand|marca)$/i.test(brand) && /^(name|nombre|perfume|modelo)$/i.test(name))
         );
+}
+
+// Formats the current in-stock catalog into plain text for the AI's system prompt.
+async function buildCatalogContext() {
+    const { data: perfumes } = await supabaseAdmin
+        .from("perfumes")
+        .select("brand, model, gender, notes_top, notes_middle, notes_base, description, price, stock_quantity")
+        .gte("stock_quantity", 1);
+
+    if (!perfumes || perfumes.length === 0) {
+        return "No hay perfumes en stock actualmente.";
+    }
+
+    return perfumes
+        .map((p) => {
+            const notes = [p.notes_top, p.notes_middle, p.notes_base].filter(Boolean).join(", ");
+            const priceLine = p.price != null ? `, precio: $${p.price}` : "";
+            const genderLine = p.gender ? `, género: ${p.gender}` : "";
+            return `- ${p.brand || ""} ${p.model || ""} (notas: ${notes || "sin especificar"}${genderLine}${priceLine})`;
+        })
+        .join("\n");
+}
+
+// Groq's API is OpenAI-compatible — same request/response shape as the OpenAI chat completions endpoint.
+async function callGroq(messages) {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.GROQ_API_KEY}`
+        },
+        body: JSON.stringify({
+            model: "llama-3.3-70b-versatile",
+            messages,
+            temperature: 0.6,
+            max_tokens: 400
+        })
+    });
+
+    if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Groq API error (${res.status}): ${errText}`);
+    }
+
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content?.trim() || "";
 }
 
 async function getSessionUser(req) {
@@ -480,6 +533,71 @@ app.get("/api/perfumes", async (req, res) => {
 
     if (error) return res.status(500).json({ error: error.message });
     res.json(data || []);
+});
+
+// Public — the chat widget's free-text Q&A, grounded in the current in-stock catalog.
+app.post("/api/chat", async (req, res) => {
+    if (!process.env.GROQ_API_KEY) {
+        return res.status(503).json({ error: "El asistente de IA no está configurado todavía." });
+    }
+
+    const { message } = req.body;
+    if (!message || typeof message !== "string") {
+        return res.status(400).json({ error: "Falta el mensaje." });
+    }
+
+    try {
+        const catalogContext = await buildCatalogContext();
+        const systemPrompt =
+            "Sos el asistente virtual de NYX, una tienda de perfumes. Respondé en español, de forma breve y amable. " +
+            "Solo podés hablar de los perfumes que aparecen en la siguiente lista de stock actual — no inventes perfumes que no estén ahí. " +
+            "Si preguntan por algo que no está en la lista, decilo honestamente y sugerí algo similar de la lista si existe.\n\n" +
+            `Stock actual:\n${catalogContext}`;
+
+        const answer = await callGroq([
+            { role: "system", content: systemPrompt },
+            { role: "user", content: message }
+        ]);
+
+        res.json({ answer });
+    } catch (err) {
+        console.error("Chat AI error:", err.message);
+        res.status(500).json({ error: "No se pudo generar una respuesta." });
+    }
+});
+
+// Public — the chat widget's structured 4-question recommendation flow.
+app.post("/api/recommend", async (req, res) => {
+    if (!process.env.GROQ_API_KEY) {
+        return res.status(503).json({ error: "El asistente de IA no está configurado todavía." });
+    }
+
+    const { answers } = req.body;
+    if (!Array.isArray(answers)) {
+        return res.status(400).json({ error: "Faltan las respuestas." });
+    }
+
+    try {
+        const catalogContext = await buildCatalogContext();
+        const preferencesText = answers.map((a) => `${a.question} ${a.answer}`).join("\n");
+
+        const systemPrompt =
+            "Sos el asistente virtual de NYX, una tienda de perfumes. Basándote ÚNICAMENTE en la siguiente lista de stock actual, " +
+            "recomendá entre 3 y 5 perfumes que mejor se ajusten a las preferencias del cliente. " +
+            "Respondé en español con una lista corta (marca + modelo, y una razón breve de una línea cada uno). " +
+            "No inventes perfumes que no estén en la lista.\n\n" +
+            `Stock actual:\n${catalogContext}`;
+
+        const recommendations = await callGroq([
+            { role: "system", content: systemPrompt },
+            { role: "user", content: `Mis preferencias:\n${preferencesText}` }
+        ]);
+
+        res.json({ recommendations });
+    } catch (err) {
+        console.error("Recommend AI error:", err.message);
+        res.status(500).json({ error: "No se pudo generar la recomendación." });
+    }
 });
 
 ensurePerfumesBucket().catch((err) => console.error("Could not verify/create Supabase Storage bucket:", err.message));
