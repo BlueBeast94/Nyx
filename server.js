@@ -125,10 +125,15 @@ function parseCsvBrandPerfumes(text) {
 
 // Formats the current in-stock catalog into plain text for the AI's system prompt.
 async function buildCatalogContext() {
-    const { data: perfumes } = await supabaseAdmin
+    const { data: perfumes, error } = await supabaseAdmin
         .from("perfumes")
-        .select("brand, model, gender, notes_top, notes_middle, notes_base, description, price, stock_quantity")
+        .select("brand, model, gender, notes_top, notes_middle, notes_base, description, stock_quantity")
         .gte("stock_quantity", 1);
+
+    if (error) {
+        console.error("buildCatalogContext query error:", error.message);
+        throw new Error("No se pudo leer el catálogo.");
+    }
 
     if (!perfumes || perfumes.length === 0) {
         return "No hay perfumes en stock actualmente.";
@@ -137,9 +142,8 @@ async function buildCatalogContext() {
     return perfumes
         .map((p) => {
             const notes = [p.notes_top, p.notes_middle, p.notes_base].filter(Boolean).join(", ");
-            const priceLine = p.price != null ? `, precio: $${p.price}` : "";
             const genderLine = p.gender ? `, género: ${p.gender}` : "";
-            return `- ${p.brand || ""} ${p.model || ""} (notas: ${notes || "sin especificar"}${genderLine}${priceLine})`;
+            return `- ${p.brand || ""} ${p.model || ""} (notas: ${notes || "sin especificar"}${genderLine})`;
         })
         .join("\n");
 }
