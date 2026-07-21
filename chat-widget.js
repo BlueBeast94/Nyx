@@ -92,13 +92,13 @@ function showChatMenu() {
 // Free-text box + the 4 quick-option buttons, always available together.
 function renderMenuInputs() {
     setChatInputArea(`
+        <div class="chat-menu-buttons">
+            ${CHAT_OPTIONS.map((opt) => `<button type="button" class="chat-option-btn" data-option="${opt.key}">${opt.label}</button>`).join("")}
+        </div>
         <form class="chat-name-form chat-freetext-form" id="chatFreeTextForm">
             <input type="text" id="chatFreeTextInput" placeholder="Escribí tu pregunta..." autocomplete="off"/>
             <button type="submit">➤</button>
         </form>
-        <div class="chat-menu-buttons">
-            ${CHAT_OPTIONS.map((opt) => `<button type="button" class="chat-option-btn" data-option="${opt.key}">${opt.label}</button>`).join("")}
-        </div>
     `);
 
     document.getElementById("chatFreeTextForm").addEventListener("submit", (e) => {
