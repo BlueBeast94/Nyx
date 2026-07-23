@@ -9,6 +9,13 @@ function splitNotes(str) {
         .filter(Boolean);
 }
 
+// Shortest note in a list — used for the card's tag row so it picks a consistent,
+// short word per category instead of whatever happens to be listed first.
+function shortestNote(notes) {
+    if (!notes.length) return null;
+    return notes.reduce((shortest, n) => (n.length < shortest.length ? n : shortest));
+}
+
 function transformPerfume(row) {
     const notes = {
         top: splitNotes(row.notes_top),
@@ -16,6 +23,11 @@ function transformPerfume(row) {
         base: splitNotes(row.notes_base)
     };
     const tags = [...new Set([...notes.top, ...notes.middle, ...notes.base])].slice(0, 3);
+    // One tag per category (top/middle/base), each the shortest note in that category,
+    // so every card's tag row is a single line and cards stay the same height —
+    // otherwise longer note text wraps to a second line and pushes the cart button
+    // down inconsistently between cards.
+    const cardTags = [notes.top, notes.middle, notes.base].map(shortestNote).filter(Boolean);
     const categories =
         row.gender === "masculino"
             ? ["Men"]
@@ -34,6 +46,7 @@ function transformPerfume(row) {
         description: row.description,
         categories, // Luxury Collection/Oriental still have no data source yet
         tags,
+        cardTags,
         notes,
         price: row.price ?? null, // not collected by the dashboard yet
         stockQuantity: row.stock_quantity ?? null,
@@ -170,8 +183,8 @@ function render() {
                 <p class="font-label-sm text-[10px] text-primary tracking-[0.2em] uppercase">${escapeHtml(p.brand) || "NYX"}</p>
                 <h3 class="font-display-lg text-base text-on-surface leading-tight">${escapeHtml(p.name)}</h3>
                 ${p.price != null ? `<p class="font-body-md text-xs text-on-surface-variant">$${p.price}</p>` : ""}
-                <div class="flex justify-center gap-1 flex-wrap">
-                    ${p.tags.map((t) => `<span class="text-[8px] uppercase tracking-widest px-2 py-0.5 border border-white/10 rounded-full text-on-surface-variant">${escapeHtml(t)}</span>`).join("")}
+                <div class="flex justify-center gap-1 flex-nowrap">
+                    ${p.cardTags.map((t) => `<span class="text-[8px] uppercase tracking-widest px-2 py-0.5 border border-white/10 rounded-full text-on-surface-variant whitespace-nowrap">${escapeHtml(t)}</span>`).join("")}
                 </div>
                 ${
                     p.inStock !== false
