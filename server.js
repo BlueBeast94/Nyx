@@ -588,8 +588,10 @@ app.post("/api/recommend", async (req, res) => {
         const systemPrompt =
             "Sos el asistente virtual de NYX, una tienda de perfumes. Basándote ÚNICAMENTE en la siguiente lista de stock actual, " +
             "recomendá entre 3 y 5 perfumes que mejor se ajusten a las preferencias del cliente. " +
-            "Respondé en español con una lista corta (marca + modelo, y una razón breve de una línea cada uno). " +
-            "No inventes perfumes que no estén en la lista.\n\n" +
+            "Respondé en español. Cada perfume va en su propia línea, empezando con '- ', con el nombre (marca + modelo) " +
+            "entre doble asterisco, seguido de una razón breve de una línea. Ejemplo de línea: " +
+            "'- **Al Wataniah Alal** — ideal para vos porque es unisex y frutal.' " +
+            "No agregues introducción ni cierre, solo la lista. No inventes perfumes que no estén en la lista.\n\n" +
             `Stock actual:\n${catalogContext}`;
 
         const recommendations = await callGroq([

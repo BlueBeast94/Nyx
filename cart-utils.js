@@ -19,6 +19,14 @@ function genderLabel(gender) {
     return "";
 }
 
+// Single-letter version for the mobile card badge, where the full word overlaps the stock badge.
+function genderAbbrev(gender) {
+    if (gender === "masculino") return "M";
+    if (gender === "femenino") return "F";
+    if (gender === "unisex") return "U";
+    return "";
+}
+
 function genderBadgeClasses(gender) {
     if (gender === "masculino") return "bg-blue-500/25 text-blue-200";
     if (gender === "femenino") return "bg-pink-500/25 text-pink-200";
@@ -26,38 +34,14 @@ function genderBadgeClasses(gender) {
     return "bg-black/50 text-white";
 }
 
-// Toggles an "Agregar a Carrito" button between its default and already-added (checked) states.
-// Once added, it stays checked/disabled — quantity changes happen on the Carrito page instead.
+// Toggles an "Agregar a Carrito" button between its default and already-added states.
+// While added, hovering swaps it into a "remove" look (icon + tooltip) so items can be
+// taken out right from the grid/modal instead of needing a trip to the Carrito page.
 function setCartButtonState(btn, inCart) {
-    const icon = btn.querySelector(".material-symbols-outlined");
-    btn.disabled = inCart;
-    if (inCart) {
-        btn.setAttribute("aria-label", "Ya está en el carrito");
-        btn.classList.remove(
-            "bg-white/5",
-            "border-white/15",
-            "text-on-surface",
-            "hover:bg-primary",
-            "hover:border-primary",
-            "hover:text-on-primary",
-            "cursor-pointer"
-        );
-        btn.classList.add("bg-green-500/15", "border-green-400/40", "text-green-300", "cursor-default");
-        if (icon) icon.textContent = "check";
-    } else {
-        btn.setAttribute("aria-label", "Agregar a carrito");
-        btn.classList.remove("bg-green-500/15", "border-green-400/40", "text-green-300", "cursor-default");
-        btn.classList.add(
-            "bg-white/5",
-            "border-white/15",
-            "text-on-surface",
-            "hover:bg-primary",
-            "hover:border-primary",
-            "hover:text-on-primary",
-            "cursor-pointer"
-        );
-        if (icon) icon.textContent = "add_shopping_cart";
-    }
+    btn.classList.toggle("in-cart", inCart);
+    const label = inCart ? "Quitar del carrito" : "Agregar a carrito";
+    btn.setAttribute("aria-label", label);
+    btn.title = label;
 }
 
 // ===== Cart storage: { [perfumeId]: quantity } =====

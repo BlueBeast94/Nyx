@@ -1,7 +1,35 @@
+html.modal-open {
+    overflow: hidden;
+}
+
+html, body {
+    /* Kills the elastic rubber-band bounce at the top/bottom of the page — on iOS
+       Safari that bounce briefly drags fixed-position elements along with it,
+       which reads as the buttons "moving" independently of the address-bar jump. */
+    overscroll-behavior-y: none;
+}
+
+body {
+    /* Safety net: a single element that's ever slightly too wide for the viewport
+       (e.g. the footer nav row) shouldn't be able to open up page-level horizontal
+       scroll. Intentional horizontal-scroll regions (like the category filter pills)
+       use their own overflow-x: auto container, so this doesn't affect them.
+       Scoped to body (not html) — an explicit overflow value on the root <html>
+       element disables iOS Safari's native page-scrolling behavior entirely. */
+    overflow-x: hidden;
+}
+
+:root {
+    /* Kept in sync by JS with the gap between the browser's layout viewport and the
+       actually-visible visual viewport (address bar height, on-screen keyboard, etc.),
+       so bottom-pinned fixed elements don't jump when that gap changes mid-scroll. */
+    --mobile-viewport-offset: 0px;
+}
+
 /* ===== Chat Widget ===== */
 .chat-widget-btn {
     position: fixed;
-    bottom: 24px;
+    bottom: calc(24px + var(--mobile-viewport-offset));
     right: 92px;
     width: 56px;
     height: 56px;
@@ -17,18 +45,22 @@
     color: white;
     cursor: pointer;
     transition: background 0.4s ease, border-color 0.4s ease, transform 0.4s ease, box-shadow 0.4s ease;
+    /* Keeps the button pinned to the viewport instead of visibly jumping as mobile
+       browsers show/hide their address bar mid-scroll — forces its own compositing layer. */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
 }
 .chat-widget-btn:hover {
     background: #cdbefb;
     border-color: #cdbefb;
     color: #1f1244;
-    transform: scale(1.12);
+    transform: translateZ(0) scale(1.12);
     box-shadow: 0 10px 30px rgba(205, 190, 251, 0.5);
 }
 
 .chat-widget-panel {
     position: fixed;
-    bottom: 92px;
+    bottom: calc(92px + var(--mobile-viewport-offset));
     right: 24px;
     width: 420px;
     max-width: calc(100vw - 48px);
@@ -42,9 +74,46 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    overscroll-behavior: contain;
+    /* Open state: pops in from the corner it's anchored to. */
+    transform-origin: bottom right;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+    transition: opacity 0.28s ease, transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), visibility 0s linear 0s;
 }
-.chat-widget-panel.hidden {
-    display: none;
+.chat-widget-panel.chat-closed {
+    /* Animated closed state instead of an instant display:none toggle. */
+    opacity: 0;
+    transform: translateY(16px) scale(0.92);
+    pointer-events: none;
+    visibility: hidden;
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0.2s;
+}
+@media (max-width: 640px) {
+    .chat-widget-panel {
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        /* 100dvh tracks the actually-visible viewport (shrinks/grows with the address
+           bar) instead of the browser's larger layout viewport, so the panel always
+           fits on screen. Falls back to 100vh on browsers without dvh support. */
+        height: 100vh;
+        height: 100dvh;
+        max-width: 100%;
+        max-height: 100vh;
+        max-height: 100dvh;
+        border-radius: 0;
+        /* Full-screen sheet reads better sliding up from the bottom than popping from a corner. */
+        transform-origin: center;
+        transform: translateY(0);
+    }
+    .chat-widget-panel.chat-closed {
+        transform: translateY(100%);
+    }
 }
 
 .chat-widget-header {
@@ -72,6 +141,7 @@
 .chat-widget-messages {
     flex: 1;
     overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 18px;
     display: flex;
     flex-direction: column;
@@ -171,6 +241,25 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+}
+.chat-recommendations-msg {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.chat-recommendation-item + .chat-recommendation-item {
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.chat-recommendation-item--nested {
+    padding-left: 14px;
+}
+.chat-perfume-name {
+    color: #cdbefb;
+    font-weight: 700;
+}
+.chat-back-btn {
+    text-align: center;
 }
 
 /* ===== Toast ===== */
@@ -359,7 +448,7 @@
 /* ===== WhatsApp button ===== */
 .whatsapp-btn {
     position: fixed;
-    bottom: 24px;
+    bottom: calc(24px + var(--mobile-viewport-offset));
     right: 24px;
     width: 56px;
     height: 56px;
@@ -373,6 +462,8 @@
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
     z-index: 55;
     transition: background 0.4s ease, border-color 0.4s ease, transform 0.4s ease, box-shadow 0.4s ease;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
 }
 .whatsapp-btn svg {
     fill: white;
@@ -381,7 +472,7 @@
 .whatsapp-btn:hover {
     background: #25d366;
     border-color: #25d366;
-    transform: scale(1.12);
+    transform: translateZ(0) scale(1.12);
     box-shadow: 0 10px 30px rgba(37, 211, 102, 0.5);
 }
 .whatsapp-btn:hover svg {
@@ -416,4 +507,114 @@
 @keyframes modalFade {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Add-to-cart / remove-from-cart toggle (card icon button) ===== */
+.add-to-cart-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #e5e1e2;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.add-to-cart-btn:hover {
+    background: #cdbefb;
+    border-color: #cdbefb;
+    color: #1f1244;
+}
+.add-to-cart-btn .icon-check,
+.add-to-cart-btn .icon-remove {
+    display: none;
+}
+.add-to-cart-btn.in-cart {
+    background: rgba(74, 222, 128, 0.15);
+    border-color: rgba(74, 222, 128, 0.4);
+    color: #86efac;
+}
+.add-to-cart-btn.in-cart .icon-add {
+    display: none;
+}
+.add-to-cart-btn.in-cart .icon-check {
+    display: inline-flex;
+}
+.add-to-cart-btn.in-cart:hover {
+    background: rgba(248, 113, 113, 0.15);
+    border-color: rgba(248, 113, 113, 0.4);
+    color: #fca5a5;
+}
+.add-to-cart-btn.in-cart:hover .icon-check {
+    display: none;
+}
+.add-to-cart-btn.in-cart:hover .icon-remove {
+    display: inline-flex;
+}
+
+/* Same toggle, full-width pill version used in the perfume detail modal */
+.modal-cart-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px 0;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(4px);
+    color: #e5e1e2;
+    font-family: "Manrope", sans-serif;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.modal-cart-btn:hover {
+    background: #cdbefb;
+    border-color: #cdbefb;
+    color: #1f1244;
+}
+.modal-cart-btn .icon-check,
+.modal-cart-btn .icon-remove,
+.modal-cart-btn .label-check,
+.modal-cart-btn .label-remove {
+    display: none;
+}
+.modal-cart-btn.in-cart {
+    background: rgba(74, 222, 128, 0.15);
+    border-color: rgba(74, 222, 128, 0.4);
+    color: #86efac;
+}
+.modal-cart-btn.in-cart .icon-add,
+.modal-cart-btn.in-cart .label-add {
+    display: none;
+}
+.modal-cart-btn.in-cart .icon-check,
+.modal-cart-btn.in-cart .label-check {
+    display: inline;
+}
+.modal-cart-btn.in-cart .icon-check {
+    display: inline-flex;
+}
+.modal-cart-btn.in-cart:hover {
+    background: rgba(248, 113, 113, 0.15);
+    border-color: rgba(248, 113, 113, 0.4);
+    color: #fca5a5;
+}
+.modal-cart-btn.in-cart:hover .icon-check,
+.modal-cart-btn.in-cart:hover .label-check {
+    display: none;
+}
+.modal-cart-btn.in-cart:hover .icon-remove,
+.modal-cart-btn.in-cart:hover .label-remove {
+    display: inline;
+}
+.modal-cart-btn.in-cart:hover .icon-remove {
+    display: inline-flex;
 }

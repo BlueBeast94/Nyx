@@ -126,7 +126,7 @@ document.querySelectorAll('img[alt="NYX PERFUMES"]').forEach((img) => {
 function stockBadge(inStock) {
     if (inStock === null || inStock === undefined) return "";
     return inStock
-        ? `<span class="stock-badge in-stock">In Stock</span>`
+        ? `<span class="stock-badge in-stock">En Stock</span>`
         : `<span class="stock-badge out-of-stock">Sold Out</span>`;
 }
 
@@ -153,11 +153,18 @@ function render() {
             <div class="relative aspect-[3/4] mb-4 overflow-hidden rounded-lg bg-surface-container-high flex items-center justify-center">
                 ${
                     p.image
-                        ? `<img alt="${escapeHtml(p.name)}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" src="${escapeHtml(p.image)}"/>`
+                        ? `<img alt="${escapeHtml(p.name)}" class="w-3/4 h-3/4 object-contain transition-transform duration-700 group-hover:scale-110" src="${escapeHtml(p.image)}"/>`
                         : `<span class="text-on-surface-variant text-[10px] uppercase tracking-widest">No Photo</span>`
                 }
                 <div class="absolute top-2 left-2">${stockBadge(p.inStock)}</div>
-                ${p.gender ? `<div class="absolute top-2 right-2"><span class="text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-full backdrop-blur-sm ${genderBadgeClasses(p.gender)}">${escapeHtml(genderLabel(p.gender))}</span></div>` : ""}
+                ${
+                    p.gender
+                        ? `<div class="absolute top-2 right-2">
+                            <span class="hidden md:inline-block text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-full backdrop-blur-sm ${genderBadgeClasses(p.gender)}">${escapeHtml(genderLabel(p.gender))}</span>
+                            <span class="md:hidden flex items-center justify-center w-6 h-6 rounded-full backdrop-blur-sm text-[10px] font-bold ${genderBadgeClasses(p.gender)}" title="${escapeHtml(genderLabel(p.gender))}">${escapeHtml(genderAbbrev(p.gender))}</span>
+                          </div>`
+                        : ""
+                }
             </div>
             <div class="text-center space-y-1.5">
                 <p class="font-label-sm text-[10px] text-primary tracking-[0.2em] uppercase">${escapeHtml(p.brand) || "NYX"}</p>
@@ -169,8 +176,10 @@ function render() {
                 ${
                     p.inStock !== false
                         ? `<div class="flex justify-end pt-1">
-                            <button type="button" class="add-to-cart-btn w-8 h-8 rounded-full bg-white/5 border border-white/15 flex items-center justify-center text-on-surface hover:bg-primary hover:border-primary hover:text-on-primary transition-colors" data-id="${escapeHtml(p.id)}" aria-label="Agregar a carrito">
-                                <span class="material-symbols-outlined text-[17px]">add_shopping_cart</span>
+                            <button type="button" class="add-to-cart-btn" data-id="${escapeHtml(p.id)}">
+                                <span class="material-symbols-outlined text-[17px] icon-add">add_shopping_cart</span>
+                                <span class="material-symbols-outlined text-[17px] icon-check">check</span>
+                                <span class="material-symbols-outlined text-[17px] icon-remove">delete</span>
                             </button>
                           </div>`
                         : ""
@@ -185,9 +194,15 @@ function render() {
             setCartButtonState(addBtn, isInCart(p.id));
             addBtn.addEventListener("click", (e) => {
                 e.stopPropagation();
-                addToCart(p.id);
-                showToast("Agregado al carrito");
-                setCartButtonState(addBtn, true);
+                if (isInCart(p.id)) {
+                    removeFromCart(p.id);
+                    showToast("Eliminado del carrito");
+                    setCartButtonState(addBtn, false);
+                } else {
+                    addToCart(p.id);
+                    showToast("Agregado al carrito");
+                    setCartButtonState(addBtn, true);
+                }
             });
         }
 
@@ -235,45 +250,48 @@ function openModal(p) {
         ${
             p.inStock === false
                 ? `<button type="button" class="w-full py-3.5 rounded-full bg-white/5 text-on-surface-variant text-[11px] uppercase tracking-[0.15em] cursor-not-allowed" disabled>Agotado</button>`
-                : `<button type="button" id="modalAddToCart" class="inline-flex items-center justify-center gap-2 w-full py-3.5 rounded-full border border-white/15 bg-white/5 backdrop-blur-sm hover:border-primary hover:bg-primary/10 transition-colors text-on-surface text-[11px] uppercase tracking-[0.15em]">
-                    <span class="material-symbols-outlined text-base">add_shopping_cart</span>
-                    Agregar a Carrito
+                : `<button type="button" id="modalAddToCart" class="modal-cart-btn">
+                    <span class="material-symbols-outlined text-base icon-add">add_shopping_cart</span>
+                    <span class="material-symbols-outlined text-base icon-check">check</span>
+                    <span class="material-symbols-outlined text-base icon-remove">delete</span>
+                    <span class="label-add">Agregar a Carrito</span>
+                    <span class="label-check">En el Carrito</span>
+                    <span class="label-remove">Quitar del Carrito</span>
                   </button>`
         }
     `;
     modal.classList.remove("hidden");
+    document.documentElement.classList.add("modal-open");
     modalContent.querySelector("#closeModal").addEventListener("click", closeModal);
 
     const modalAddBtn = modalContent.querySelector("#modalAddToCart");
     if (modalAddBtn) {
         setModalAddToCartState(modalAddBtn, isInCart(p.id));
         modalAddBtn.addEventListener("click", () => {
-            addToCart(p.id);
-            showToast("Agregado al carrito");
-            setModalAddToCartState(modalAddBtn, true);
-
-            // Keep the card behind the modal in sync too — it's a separate element that won't update on its own.
             const cardBtn = grid.querySelector(`.add-to-cart-btn[data-id="${p.id}"]`);
-            if (cardBtn) setCartButtonState(cardBtn, true);
+
+            if (isInCart(p.id)) {
+                removeFromCart(p.id);
+                showToast("Eliminado del carrito");
+                setModalAddToCartState(modalAddBtn, false);
+                if (cardBtn) setCartButtonState(cardBtn, false);
+            } else {
+                addToCart(p.id);
+                showToast("Agregado al carrito");
+                setModalAddToCartState(modalAddBtn, true);
+                if (cardBtn) setCartButtonState(cardBtn, true);
+            }
         });
     }
 }
 
 function setModalAddToCartState(btn, inCart) {
-    btn.disabled = inCart;
-    if (inCart) {
-        btn.classList.remove("border-white/15", "bg-white/5", "hover:border-primary", "hover:bg-primary/10", "text-on-surface");
-        btn.classList.add("border-green-400/40", "bg-green-500/15", "text-green-300", "cursor-default");
-        btn.innerHTML = `<span class="material-symbols-outlined text-base">check</span> En el carrito`;
-    } else {
-        btn.classList.remove("border-green-400/40", "bg-green-500/15", "text-green-300", "cursor-default");
-        btn.classList.add("border-white/15", "bg-white/5", "hover:border-primary", "hover:bg-primary/10", "text-on-surface");
-        btn.innerHTML = `<span class="material-symbols-outlined text-base">add_shopping_cart</span> Agregar a Carrito`;
-    }
+    btn.classList.toggle("in-cart", inCart);
 }
 
 function closeModal() {
     modal.classList.add("hidden");
+    document.documentElement.classList.remove("modal-open");
 }
 
 modal.addEventListener("click", (e) => {
@@ -347,3 +365,35 @@ updateAuthLink();
 
 // ===== Init =====
 loadPerfumes();
+
+// ===== Keep bottom-fixed floating buttons pinned during mobile scroll =====
+// Mobile browsers resize the layout viewport asynchronously as their address bar
+// collapses/expands mid-scroll, which is what makes position:fixed;bottom:Npx
+// elements appear to jump a beat after scrolling starts. The visual viewport API
+// reports the actually-visible area live, so we measure the gap against it and
+// feed that back as a CSS var the buttons compensate for.
+function syncMobileViewportOffset() {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const offset = Math.max(0, window.innerHeight - (vv.height + vv.offsetTop));
+    document.documentElement.style.setProperty("--mobile-viewport-offset", `${offset}px`);
+}
+
+// Batches sync calls into one per animation frame — window "scroll" fires far more
+// often than visualViewport's own events, so this catches the gap sooner without
+// doing redundant work for events landing in the same frame.
+let viewportSyncFrame = null;
+function scheduleViewportSync() {
+    if (viewportSyncFrame) return;
+    viewportSyncFrame = requestAnimationFrame(() => {
+        viewportSyncFrame = null;
+        syncMobileViewportOffset();
+    });
+}
+
+if (window.visualViewport) {
+    syncMobileViewportOffset();
+    window.visualViewport.addEventListener("resize", scheduleViewportSync);
+    window.visualViewport.addEventListener("scroll", scheduleViewportSync);
+    window.addEventListener("scroll", scheduleViewportSync, { passive: true });
+}

@@ -61,6 +61,48 @@ function addChatMessage(text, from) {
     scrollChatToBottom();
 }
 
+function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// Renders the AI recommendation list as separate, spaced items with the perfume name highlighted,
+// instead of one dense wall of text. Expects lines like "- **Perfume Name** (notes) - reason", but the
+// model doesn't always follow the ** markup, so we fall back to highlighting the text before the first
+// "(" when it's short enough to plausibly be a name rather than a whole sentence.
+function addRecommendationsMessage(text) {
+    const msg = document.createElement("div");
+    msg.className = "chat-msg bot chat-recommendations-msg";
+
+    const lines = text.split("\n").filter((line) => line.trim().length > 0);
+    lines.forEach((rawLine) => {
+        const line = rawLine.trim();
+        const bulletMatch = line.match(/^[-*+]\s+(.*)$/);
+        const isNested = /^\s+[-*+]\s/.test(rawLine);
+        const content = bulletMatch ? bulletMatch[1] : line;
+        const item = document.createElement("div");
+        item.className = bulletMatch
+            ? `chat-recommendation-item${isNested ? " chat-recommendation-item--nested" : ""}`
+            : "chat-recommendation-intro";
+
+        let html = escapeHtml(content).replace(/\*\*(.+?)\*\*/g, '<span class="chat-perfume-name">$1</span>');
+        if (bulletMatch && !html.includes("chat-perfume-name")) {
+            const parenIdx = content.indexOf("(");
+            if (parenIdx > 0 && parenIdx < 60) {
+                const name = escapeHtml(content.slice(0, parenIdx).trim());
+                const rest = escapeHtml(content.slice(parenIdx));
+                html = `<span class="chat-perfume-name">${name}</span> ${rest}`;
+            }
+        }
+        item.innerHTML = html;
+        msg.appendChild(item);
+    });
+
+    chatWidgetMessages.appendChild(msg);
+    scrollChatToBottom();
+}
+
 function setChatInputArea(html) {
     chatWidgetInputArea.innerHTML = html;
     scrollChatToBottom();
@@ -192,13 +234,18 @@ async function fetchRecommendations() {
             throw new Error(data.error || "No se pudo generar la recomendación");
         }
 
-        addChatMessage(data.recommendations, "bot");
+        addRecommendationsMessage(data.recommendations);
     } catch (err) {
         console.error("Failed to fetch recommendations:", err);
         addChatMessage("No pudimos generar recomendaciones justo ahora — probá de nuevo en un rato.", "bot");
     }
 
-    renderMenuInputs();
+    showBackToMenuButton();
+}
+
+function showBackToMenuButton() {
+    setChatInputArea(`<button type="button" class="chat-option-btn chat-back-btn" id="chatBackToMenuBtn">← Volver al menú</button>`);
+    document.getElementById("chatBackToMenuBtn").addEventListener("click", renderMenuInputs);
 }
 
 function startChat() {
@@ -209,10 +256,10 @@ function startChat() {
 }
 
 chatWidgetBtn.addEventListener("click", () => {
-    chatWidgetPanel.classList.remove("hidden");
+    chatWidgetPanel.classList.remove("chat-closed");
     startChat();
 });
 
 closeChatWidget.addEventListener("click", () => {
-    chatWidgetPanel.classList.add("hidden");
+    chatWidgetPanel.classList.add("chat-closed");
 });
