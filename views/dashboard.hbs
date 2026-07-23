@@ -14,6 +14,10 @@
         background: #141314;
         color: #e5e1e2;
         font-family: "Manrope", sans-serif;
+        /* Safety net — no element on this page is meant to cause page-level
+           horizontal scroll; the header is the one most likely to overflow on
+           narrow screens if its content doesn't wrap. */
+        overflow-x: hidden;
     }
     header {
         display: flex;
@@ -86,6 +90,9 @@
         display: flex;
         gap: 12px;
         margin-bottom: 32px;
+    }
+    .mobile-tab-select {
+        display: none;
     }
     .tab-btn {
         background: transparent;
@@ -499,6 +506,170 @@
         opacity: 0.35;
         cursor: not-allowed;
     }
+
+    /* ===== Mobile table view — stacks each row into a labeled card instead of ===== */
+    /* ===== squeezing a wide multi-column table into a narrow screen. ===== */
+    @media (max-width: 700px) {
+        .tabs {
+            display: none;
+        }
+        .mobile-tab-select {
+            display: block;
+            width: 100%;
+            margin-bottom: 24px;
+            background: #1c1b1c;
+            border: 1.5px solid rgba(205, 190, 251, 0.4);
+            border-radius: 10px;
+            padding: 12px 14px;
+            color: #ffffff;
+            font-family: "Manrope", sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            cursor: pointer;
+        }
+        .mobile-tab-select option {
+            background: #1c1b1c;
+            color: #ffffff;
+        }
+        /* Header was a single flex row (back button, title, email, role, logout) that
+           never wrapped — on narrow screens that forced the whole page wider than the
+           viewport. Wrap it onto two rows and shrink everything to fit instead. */
+        header {
+            flex-wrap: wrap;
+            padding: 16px 20px;
+            row-gap: 10px;
+        }
+        header h1 {
+            font-size: 16px;
+        }
+        .header-left {
+            gap: 10px;
+        }
+        .back-btn {
+            padding: 6px 12px;
+            font-size: 11px;
+        }
+        .who {
+            width: 100%;
+            justify-content: space-between;
+            font-size: 11px;
+            gap: 8px;
+        }
+        .who span:first-child {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            min-width: 0;
+        }
+        .role-badge {
+            padding: 3px 10px;
+            font-size: 10px;
+            flex-shrink: 0;
+        }
+        .logout-btn {
+            padding: 6px 12px;
+            font-size: 10px;
+            flex-shrink: 0;
+        }
+        table.responsive-table thead {
+            display: none;
+        }
+        table.responsive-table, table.responsive-table tbody, table.responsive-table tr, table.responsive-table td {
+            display: block;
+            width: 100%;
+        }
+        table.responsive-table tr {
+            margin-bottom: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            padding: 4px 0;
+            background: rgba(255, 255, 255, 0.02);
+        }
+        table.responsive-table tr.empty-row {
+            padding: 20px 0;
+        }
+        table.responsive-table td {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 12px;
+            text-align: right;
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        table.responsive-table td:last-child {
+            border-bottom: none;
+        }
+        table.responsive-table td::before {
+            content: attr(data-label);
+            margin-right: auto;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #c9c5cb;
+            text-align: left;
+            flex-shrink: 0;
+        }
+        table.responsive-table td:not([data-label])::before {
+            content: none;
+        }
+        table.responsive-table tr.empty-row td {
+            justify-content: center;
+            text-align: center;
+        }
+        table.responsive-table tr.empty-row td::before {
+            content: none;
+        }
+        table.responsive-table td img,
+        table.responsive-table td .no-photo {
+            margin-left: auto;
+        }
+        table.responsive-table td.row-actions {
+            justify-content: flex-end;
+        }
+        /* Longer multi-line fields read better stacked than squeezed right-aligned. */
+        table.responsive-table td[data-label="Notes"],
+        table.responsive-table td[data-label="Description"] {
+            flex-direction: column;
+            align-items: flex-start;
+            text-align: left;
+        }
+        table.responsive-table td[data-label="Notes"]::before,
+        table.responsive-table td[data-label="Description"]::before {
+            margin-right: 0;
+            margin-bottom: 6px;
+        }
+
+        /* Collapsed-by-default rows — tap the card to reveal the rest of the fields
+           (and the edit/delete actions) instead of showing everything at once. */
+        table.responsive-table td.mobile-detail {
+            display: none;
+        }
+        table.responsive-table tr.expanded td.mobile-detail {
+            display: flex;
+        }
+        table.collapsible-table tr:not(.empty-row) {
+            position: relative;
+            cursor: pointer;
+            padding-right: 30px;
+        }
+        table.collapsible-table tr:not(.empty-row)::after {
+            content: "expand_more";
+            font-family: "Material Symbols Outlined";
+            position: absolute;
+            top: 16px;
+            right: 14px;
+            color: #6e6a72;
+            font-size: 18px;
+            transition: transform 0.2s ease;
+            pointer-events: none;
+        }
+        table.collapsible-table tr.expanded::after {
+            transform: rotate(180deg);
+        }
+    }
 </style>
 </head>
 <body>
@@ -527,6 +698,15 @@
     <button class="tab-btn" data-tab="usuarios">Usuarios</button>
     {{/if}}
 </div>
+<select class="mobile-tab-select" id="mobileTabSelect">
+    <option value="inventario">Inventario</option>
+    <option value="catalogo">Catálogo</option>
+    <option value="marcas">Marcas</option>
+    <option value="modelos">Modelos</option>
+    {{#if isAdmin}}
+    <option value="usuarios">Usuarios</option>
+    {{/if}}
+</select>
 
 <section id="inventario" class="tab-panel">
     {{#if perfumeMsg}}<p class="success">{{perfumeMsg}}</p>{{/if}}
@@ -552,7 +732,7 @@
         </div>
     </div>
 
-    <table>
+    <table class="responsive-table collapsible-table">
         <thead>
         <tr><th>Photo</th><th>Marca</th><th>Modelo</th><th>Género</th><th>En Stock</th><th>Notes</th><th>Description</th><th></th></tr>
         </thead>
@@ -592,7 +772,7 @@
         </div>
     </div>
 
-    <table>
+    <table class="responsive-table collapsible-table">
         <thead>
         <tr><th>Photo</th><th>Marca</th><th>Modelo</th><th>Género</th><th>En Stock</th><th></th></tr>
         </thead>
@@ -640,16 +820,16 @@
     </form>
     <p style="font-size:12px;color:#6e6a72;margin-top:-16px;margin-bottom:24px;">Una marca por línea (o primera columna si el CSV tiene varias). Las que ya existen se omiten.</p>
 
-    <table>
+    <table class="responsive-table collapsible-table">
         <thead>
         <tr><th>Marca</th><th>Agregada</th><th></th></tr>
         </thead>
         <tbody>
         {{#each brands}}
             <tr>
-                <td>{{this.name}}</td>
-                <td>{{this.created_at}}</td>
-                <td>
+                <td data-label="Marca">{{this.name}}</td>
+                <td data-label="Agregada" class="mobile-detail">{{this.created_at}}</td>
+                <td class="row-actions mobile-detail">
                     <form action="/dashboard/brands/{{this.id}}/delete" method="POST" onsubmit="return confirm('¿Eliminar esta marca?');">
                         <button type="submit" class="text-btn">Eliminar</button>
                     </form>
@@ -701,7 +881,7 @@
         <input id="refFilterInput" type="text" placeholder="Marca o nombre..."/>
     </div>
 
-    <table>
+    <table class="responsive-table collapsible-table">
         <thead>
         <tr><th>Marca</th><th>Nombre</th><th></th></tr>
         </thead>
@@ -736,13 +916,13 @@
         </div>
         <button type="submit" class="primary-btn">Create User</button>
     </form>
-    <table>
+    <table class="responsive-table">
         <thead>
         <tr><th>Email</th><th>Role</th></tr>
         </thead>
         <tbody>
         {{#each users}}
-            <tr><td>{{this.email}}</td><td>{{this.role}}</td></tr>
+            <tr><td data-label="Email">{{this.email}}</td><td data-label="Role">{{this.role}}</td></tr>
         {{else}}
             <tr class="empty-row"><td colspan="2">No users yet.</td></tr>
         {{/each}}
@@ -831,13 +1011,15 @@
 </div>
 
 <script>
-    // ===== Tabs =====
+    // ===== Tabs (button row on desktop, dropdown on mobile — see .mobile-tab-select) =====
     const tabButtons = document.querySelectorAll(".tab-btn");
     const tabPanels = document.querySelectorAll(".tab-panel");
+    const mobileTabSelect = document.getElementById("mobileTabSelect");
 
     function activateTab(name) {
         tabButtons.forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
         tabPanels.forEach((p) => p.classList.toggle("active", p.id === name));
+        mobileTabSelect.value = name;
     }
 
     tabButtons.forEach((btn) => {
@@ -847,8 +1029,26 @@
         });
     });
 
+    mobileTabSelect.addEventListener("change", () => {
+        activateTab(mobileTabSelect.value);
+        history.replaceState(null, "", `#${mobileTabSelect.value}`);
+    });
+
     const initialTab = window.location.hash.replace("#", "") || "inventario";
     activateTab(document.getElementById(initialTab) ? initialTab : "inventario");
+
+    // ===== Mobile: tap a collapsed row to reveal its hidden (.mobile-detail) fields =====
+    // and edit/delete actions. No-op on desktop, where .mobile-detail is always visible.
+    function bindCollapsibleRow(tr) {
+        tr.addEventListener("click", (e) => {
+            if (e.target.closest("button, a, input, select, textarea, form")) return;
+            tr.classList.toggle("expanded");
+        });
+    }
+
+    // Marcas' rows are server-rendered and never re-rendered by JS, so bind them once here.
+    // Inventario/Catálogo/Modelos rows are (re)built in JS and bind themselves on each render.
+    document.querySelectorAll("#marcas table.collapsible-table tbody tr:not(.empty-row)").forEach(bindCollapsibleRow);
 
     // ===== Perfume modal (shared by Add + Edit) =====
     const perfumeModal = document.getElementById("perfumeModal");
@@ -1080,12 +1280,13 @@
         filtered.forEach((rp) => {
             const tr = document.createElement("tr");
             tr.innerHTML = `
-                <td>${escapeHtml(rp.brand)}</td>
-                <td>${escapeHtml(rp.name)}</td>
-                <td>
+                <td data-label="Marca">${escapeHtml(rp.brand)}</td>
+                <td data-label="Nombre">${escapeHtml(rp.name)}</td>
+                <td class="row-actions mobile-detail">
                     <button type="button" class="text-btn ref-delete-btn" data-id="${escapeHtml(rp.id)}">Eliminar</button>
                 </td>
             `;
+            bindCollapsibleRow(tr);
             refTableBody.appendChild(tr);
         });
 
@@ -1209,18 +1410,18 @@
                 pageItems.forEach((p) => {
                     const tr = document.createElement("tr");
                     tr.innerHTML = `
-                        <td>${p.image_url ? `<img src="${escapeHtml(p.image_url)}" alt="${escapeHtml(p.model)}"/>` : `<div class="no-photo">N/A</div>`}</td>
-                        <td>${escapeHtml(p.brand)}</td>
-                        <td>${escapeHtml(p.model)}</td>
-                        <td>${p.gender ? `<span class="gender-badge ${escapeHtml(p.gender)}">${escapeHtml(genderLabel(p.gender))}</span>` : ""}</td>
-                        <td>${p.stock_quantity >= 1 ? `<span class="stock-check"><span class="material-symbols-outlined">check_circle</span>${p.stock_quantity}</span>` : ""}</td>
+                        <td data-label="Photo">${p.image_url ? `<img src="${escapeHtml(p.image_url)}" alt="${escapeHtml(p.model)}"/>` : `<div class="no-photo">N/A</div>`}</td>
+                        <td data-label="Marca">${escapeHtml(p.brand)}</td>
+                        <td data-label="Modelo">${escapeHtml(p.model)}</td>
+                        <td data-label="Género" class="mobile-detail">${p.gender ? `<span class="gender-badge ${escapeHtml(p.gender)}">${escapeHtml(genderLabel(p.gender))}</span>` : ""}</td>
+                        <td data-label="En Stock" class="mobile-detail">${p.stock_quantity >= 1 ? `<span class="stock-check"><span class="material-symbols-outlined">check_circle</span>${p.stock_quantity}</span>` : ""}</td>
                         ${
                             compact
                                 ? ""
-                                : `<td>Top: ${escapeHtml(p.notes_top)}<br/>Middle: ${escapeHtml(p.notes_middle)}<br/>Base: ${escapeHtml(p.notes_base)}</td>
-                                   <td>${escapeHtml(p.description)}</td>`
+                                : `<td data-label="Notes" class="mobile-detail">Top: ${escapeHtml(p.notes_top)}<br/>Middle: ${escapeHtml(p.notes_middle)}<br/>Base: ${escapeHtml(p.notes_base)}</td>
+                                   <td data-label="Description" class="mobile-detail">${escapeHtml(p.description)}</td>`
                         }
-                        <td class="row-actions">
+                        <td class="row-actions mobile-detail">
                             <button type="button" class="icon-btn edit-btn" data-id="${escapeHtml(p.id)}" aria-label="Editar" title="Editar">
                                 <span class="material-symbols-outlined">edit</span>
                             </button>
@@ -1233,6 +1434,7 @@
                             }
                         </td>
                     `;
+                    bindCollapsibleRow(tr);
                     tableBody.appendChild(tr);
                 });
             }
