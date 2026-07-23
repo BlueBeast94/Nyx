@@ -555,7 +555,11 @@ app.post("/api/chat", async (req, res) => {
         const systemPrompt =
             "Sos el asistente virtual de NYX, una tienda de perfumes. Respondé en español, de forma breve y amable. " +
             "Solo podés hablar de los perfumes que aparecen en la siguiente lista de stock actual — no inventes perfumes que no estén ahí. " +
-            "Si preguntan por algo que no está en la lista, decilo honestamente y sugerí algo similar de la lista si existe.\n\n" +
+            "Si preguntan por algo que no está en la lista, decilo honestamente y sugerí algo similar de la lista si existe. " +
+            "Si tu respuesta recomienda o menciona uno o más perfumes puntuales, listalos cada uno en su propia línea " +
+            "empezando con '- ', con el nombre (marca + modelo) entre doble asterisco, seguido de una razón breve. " +
+            "Ejemplo: '- **Al Wataniah Alal** — ideal si buscás algo unisex y frutal.' " +
+            "Para respuestas que no impliquen recomendar perfumes puntuales, respondé en prosa normal, sin listas.\n\n" +
             `Stock actual:\n${catalogContext}`;
 
         const answer = await callGroq([

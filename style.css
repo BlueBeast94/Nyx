@@ -100,12 +100,16 @@ body {
         width: 100%;
         /* 100dvh tracks the actually-visible viewport (shrinks/grows with the address
            bar) instead of the browser's larger layout viewport, so the panel always
-           fits on screen. Falls back to 100vh on browsers without dvh support. */
-        height: 100vh;
-        height: 100dvh;
+           fits on screen. Falls back to 100vh on browsers without dvh support. We also
+           subtract --mobile-viewport-offset (which grows to include the on-screen
+           keyboard's height, see app.js) so the panel's bottom — where the input box
+           lives — shrinks up to stay right above the keyboard instead of the browser
+           scrolling the whole fixed panel to keep the focused input visible. */
+        height: calc(100vh - var(--mobile-viewport-offset));
+        height: calc(100dvh - var(--mobile-viewport-offset));
         max-width: 100%;
-        max-height: 100vh;
-        max-height: 100dvh;
+        max-height: calc(100vh - var(--mobile-viewport-offset));
+        max-height: calc(100dvh - var(--mobile-viewport-offset));
         border-radius: 0;
         /* Full-screen sheet reads better sliding up from the bottom than popping from a corner. */
         transform-origin: center;

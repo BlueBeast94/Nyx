@@ -131,18 +131,18 @@ function showChatMenu() {
     renderMenuInputs();
 }
 
-// Free-text box + the 4 quick-option buttons, always available together.
-function renderMenuInputs() {
-    setChatInputArea(`
-        <div class="chat-menu-buttons">
-            ${CHAT_OPTIONS.map((opt) => `<button type="button" class="chat-option-btn" data-option="${opt.key}">${opt.label}</button>`).join("")}
-        </div>
-        <form class="chat-name-form chat-freetext-form" id="chatFreeTextForm">
-            <input type="text" id="chatFreeTextInput" placeholder="Escribí tu pregunta..." autocomplete="off"/>
-            <button type="submit">➤</button>
-        </form>
-    `);
+// Shared free-text input markup + submit wiring — used both on the main menu and
+// anywhere else the user should be able to ask a follow-up question directly
+// (e.g. right after getting recommendations) instead of the box only showing up
+// after backing out to the main menu.
+const FREE_TEXT_FORM_HTML = `
+    <form class="chat-name-form chat-freetext-form" id="chatFreeTextForm">
+        <input type="text" id="chatFreeTextInput" placeholder="Escribí tu pregunta..." autocomplete="off"/>
+        <button type="submit">➤</button>
+    </form>
+`;
 
+function bindFreeTextForm() {
     document.getElementById("chatFreeTextForm").addEventListener("submit", (e) => {
         e.preventDefault();
         const input = document.getElementById("chatFreeTextInput");
@@ -152,6 +152,18 @@ function renderMenuInputs() {
         input.value = "";
         askFreeTextQuestion(question);
     });
+}
+
+// Free-text box + the 4 quick-option buttons, always available together.
+function renderMenuInputs() {
+    setChatInputArea(`
+        <div class="chat-menu-buttons">
+            ${CHAT_OPTIONS.map((opt) => `<button type="button" class="chat-option-btn" data-option="${opt.key}">${opt.label}</button>`).join("")}
+        </div>
+        ${FREE_TEXT_FORM_HTML}
+    `);
+
+    bindFreeTextForm();
 
     chatWidgetInputArea.querySelectorAll(".chat-option-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -181,13 +193,18 @@ async function askFreeTextQuestion(question) {
             throw new Error(data.error || "No se pudo responder");
         }
 
-        addChatMessage(data.answer, "bot");
+        // Same styling as the guided recommendation flow — the model formats perfume
+        // suggestions as a "- **Name** — reason" list here too, and this renderer
+        // degrades gracefully to plain text for answers that aren't a list at all.
+        addRecommendationsMessage(data.answer);
     } catch (err) {
         console.error("Failed to get chat answer:", err);
         addChatMessage("No pude responder justo ahora — probá de nuevo en un rato.", "bot");
     }
 
-    renderMenuInputs();
+    // Once the user has typed their own question, keep the 4-option menu tucked
+    // away behind "Volver al menú" instead of showing it again every time.
+    showBackToMenuButton();
 }
 
 // ===== AI recommendation flow =====
@@ -243,9 +260,15 @@ async function fetchRecommendations() {
     showBackToMenuButton();
 }
 
+// Shown after recommendations instead of the full 4-button menu, but still lets the
+// user ask a direct follow-up question without first backing out to the main menu.
 function showBackToMenuButton() {
-    setChatInputArea(`<button type="button" class="chat-option-btn chat-back-btn" id="chatBackToMenuBtn">← Volver al menú</button>`);
+    setChatInputArea(`
+        <button type="button" class="chat-option-btn chat-back-btn" id="chatBackToMenuBtn">← Volver al menú</button>
+        ${FREE_TEXT_FORM_HTML}
+    `);
     document.getElementById("chatBackToMenuBtn").addEventListener("click", renderMenuInputs);
+    bindFreeTextForm();
 }
 
 function startChat() {
