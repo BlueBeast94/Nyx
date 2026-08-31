@@ -166,9 +166,10 @@ function render() {
             <div class="relative aspect-[3/4] mb-4 overflow-hidden rounded-lg bg-surface-container-high flex items-center justify-center">
                 ${
                     p.image
-                        ? `<img alt="${escapeHtml(p.name)}" class="w-3/4 h-3/4 object-contain transition-transform duration-700 group-hover:scale-110" src="${escapeHtml(p.image)}"/>`
+                        ? `<img alt="${escapeHtml(p.name)}" class="w-3/4 h-3/4 object-contain transition-transform duration-700 -translate-x-10 group-hover:scale-110" src="${escapeHtml(p.image)}"/>`
                         : `<span class="text-on-surface-variant text-[10px] uppercase tracking-widest">No Photo</span>`
                 }
+                <img alt="" aria-hidden="true" class="absolute inset-0 w-full h-full object-contain pointer-events-none select-none opacity-80 transition-transform duration-700 scale-50 translate-x-12 translate-y-8 group-hover:scale-[0.55]" src="NyxPerfum.png" onerror="this.style.display='none'"/>
                 <div class="absolute top-2 left-2">${stockBadge(p.inStock)}</div>
                 ${
                     p.gender

@@ -149,6 +149,11 @@ async function buildCatalogContext() {
 }
 
 // Groq's API is OpenAI-compatible — same request/response shape as the OpenAI chat completions endpoint.
+// llama-3.3-70b-versatile was retired by Groq (404 model_not_found) — moved to the still-supported
+// openai/gpt-oss-120b. That model "thinks" before answering by default (a separate reasoning field
+// that burns completion tokens without ever being shown to the user — up to 45 tokens of reasoning
+// for a one-word reply in testing); reasoning_effort: "low" is the minimum Groq allows and cuts that
+// down to ~14 tokens while keeping answer quality about the same.
 async function callGroq(messages) {
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
@@ -157,10 +162,11 @@ async function callGroq(messages) {
             Authorization: `Bearer ${process.env.GROQ_API_KEY}`
         },
         body: JSON.stringify({
-            model: "llama-3.3-70b-versatile",
+            model: "openai/gpt-oss-120b",
             messages,
             temperature: 0.6,
-            max_tokens: 400
+            max_tokens: 400,
+            reasoning_effort: "low"
         })
     });
 
