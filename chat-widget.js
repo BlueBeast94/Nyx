@@ -170,12 +170,33 @@ function renderMenuInputs() {
             addChatMessage(btn.textContent, "user");
             if (btn.dataset.option === "recomendaciones") {
                 startRecommendationFlow();
+            } else if (btn.dataset.option === "promociones") {
+                showPromotionsReply();
             } else {
                 addChatMessage(CHAT_RESPONSES[btn.dataset.option], "bot");
                 renderMenuInputs();
             }
         });
     });
+}
+
+// Pulls the live list of promotions (set from the dashboard's Precios tab) instead of a
+// hardcoded line, falling back to the "no active promotions" default if the list is empty.
+async function showPromotionsReply() {
+    try {
+        const res = await fetch("/api/promotions");
+        const data = await res.json();
+        const promotions = Array.isArray(data.promotions) ? data.promotions : [];
+        if (promotions.length > 0) {
+            addRecommendationsMessage(promotions.map((p) => `- ${p.text}`).join("\n"));
+        } else {
+            addChatMessage(CHAT_RESPONSES.promociones, "bot");
+        }
+    } catch (err) {
+        console.error("Failed to fetch promotions:", err);
+        addChatMessage(CHAT_RESPONSES.promociones, "bot");
+    }
+    renderMenuInputs();
 }
 
 async function askFreeTextQuestion(question) {

@@ -123,11 +123,32 @@ function parseCsvBrandPerfumes(text) {
         );
 }
 
-// Formats the current in-stock catalog into plain text for the AI's system prompt.
+// List of store-wide promotions — shown as a rotating carousel on the storefront and
+// mentioned by the chat widget. Returns [] (not an error) if the migration hasn't been
+// run yet, so the rest of the app degrades gracefully instead of throwing.
+async function getPromotions() {
+    const { data, error } = await supabaseAdmin
+        .from("promotions")
+        .select("*")
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: true });
+    if (error) {
+        console.error("getPromotions query error:", error.message);
+        return [];
+    }
+    return data || [];
+}
+
+function formatPrice(n) {
+    return `$${Number(n).toFixed(2)}`;
+}
+
+// Formats the current in-stock catalog (with price/discount info) plus any active
+// store-wide promotions into plain text for the AI's system prompt.
 async function buildCatalogContext() {
     const { data: perfumes, error } = await supabaseAdmin
         .from("perfumes")
-        .select("brand, model, gender, notes_top, notes_middle, notes_base, description, stock_quantity")
+        .select("brand, model, gender, notes_top, notes_middle, notes_base, description, stock_quantity, price, discount_percent")
         .gte("stock_quantity", 1);
 
     if (error) {
@@ -135,17 +156,34 @@ async function buildCatalogContext() {
         throw new Error("No se pudo leer el catálogo.");
     }
 
+    const promotions = await getPromotions();
+    const promoLine =
+        promotions.length > 0
+            ? `Promociones activas en la tienda:\n${promotions.map((p) => `- ${p.text}`).join("\n")}\n\n`
+            : "";
+
     if (!perfumes || perfumes.length === 0) {
-        return "No hay perfumes en stock actualmente.";
+        return `${promoLine}No hay perfumes en stock actualmente.`;
     }
 
-    return perfumes
+    const catalog = perfumes
         .map((p) => {
             const notes = [p.notes_top, p.notes_middle, p.notes_base].filter(Boolean).join(", ");
             const genderLine = p.gender ? `, género: ${p.gender}` : "";
-            return `- ${p.brand || ""} ${p.model || ""} (notas: ${notes || "sin especificar"}${genderLine})`;
+            let priceLine = "";
+            if (p.price != null) {
+                if (p.discount_percent > 0) {
+                    const finalPrice = p.price * (1 - p.discount_percent / 100);
+                    priceLine = `, precio: ${formatPrice(p.price)} con ${p.discount_percent}% de descuento (queda en ${formatPrice(finalPrice)})`;
+                } else {
+                    priceLine = `, precio: ${formatPrice(p.price)}`;
+                }
+            }
+            return `- ${p.brand || ""} ${p.model || ""} (notas: ${notes || "sin especificar"}${genderLine}${priceLine})`;
         })
         .join("\n");
+
+    return `${promoLine}${catalog}`;
 }
 
 // Groq's API is OpenAI-compatible — same request/response shape as the OpenAI chat completions endpoint.
@@ -274,6 +312,8 @@ app.get("/dashboard", requireAuth, async (req, res) => {
         users = data || [];
     }
 
+    const promotions = await getPromotions();
+
     res.render("dashboard", {
         email: req.user.email,
         role: req.profile.role,
@@ -282,12 +322,15 @@ app.get("/dashboard", requireAuth, async (req, res) => {
         brands: brands || [],
         referencePerfumes: referencePerfumes || [],
         users,
+        promotions,
         userMsg: req.query.userMsg,
         userError: req.query.userError,
         perfumeMsg: req.query.perfumeMsg,
         perfumeError: req.query.perfumeError,
         brandMsg: req.query.brandMsg,
-        brandError: req.query.brandError
+        brandError: req.query.brandError,
+        promoMsg: req.query.promoMsg,
+        promoError: req.query.promoError
     });
 });
 
@@ -313,7 +356,7 @@ app.post("/dashboard/users", requireAuth, requireAdmin, async (req, res) => {
 });
 
 app.post("/dashboard/perfumes", requireAuth, upload.single("photo"), async (req, res) => {
-    const { brand, model, gender, stockQuantity, notesTop, notesMiddle, notesBase, description } = req.body;
+    const { brand, model, gender, stockQuantity, notesTop, notesMiddle, notesBase, description, price, discountPercent } = req.body;
 
     let imageUrl = null;
     if (req.file) {
@@ -334,7 +377,9 @@ app.post("/dashboard/perfumes", requireAuth, upload.single("photo"), async (req,
         notes_top: notesTop,
         notes_middle: notesMiddle,
         notes_base: notesBase,
-        description
+        description,
+        price: price === "" || price == null ? null : Math.max(0, Number(price)),
+        discount_percent: discountPercent === "" || discountPercent == null ? null : Math.min(100, Math.max(0, Number(discountPercent)))
     });
 
     if (error) {
@@ -348,7 +393,7 @@ app.post("/dashboard/perfumes", requireAuth, upload.single("photo"), async (req,
 
 app.post("/dashboard/perfumes/:id", requireAuth, upload.single("photo"), async (req, res) => {
     const { id } = req.params;
-    const { brand, model, gender, stockQuantity, notesTop, notesMiddle, notesBase, description } = req.body;
+    const { brand, model, gender, stockQuantity, notesTop, notesMiddle, notesBase, description, price, discountPercent } = req.body;
 
     const updates = {
         name: model || brand || "Sin nombre",
@@ -359,7 +404,9 @@ app.post("/dashboard/perfumes/:id", requireAuth, upload.single("photo"), async (
         notes_top: notesTop,
         notes_middle: notesMiddle,
         notes_base: notesBase,
-        description
+        description,
+        price: price === "" || price == null ? null : Math.max(0, Number(price)),
+        discount_percent: discountPercent === "" || discountPercent == null ? null : Math.min(100, Math.max(0, Number(discountPercent)))
     };
 
     if (req.file) {
@@ -532,6 +579,79 @@ app.post("/dashboard/reference-perfumes/:id/delete", requireAuth, async (req, re
         return res.redirect(`/dashboard?brandError=${encodeURIComponent(error.message)}#modelos`);
     }
     res.redirect("/dashboard?brandMsg=Perfume de referencia eliminado#modelos");
+});
+
+// ===== Precios y Promociones =====
+// Bulk price — the whole catalog sells at one price, so this sets it on every perfume
+// at once instead of needing to edit each one individually.
+app.post("/dashboard/pricing/price", requireAuth, async (req, res) => {
+    const { price } = req.body;
+    const value = price === "" || price == null ? null : Math.max(0, Number(price));
+
+    const { data, error } = await supabaseAdmin.from("perfumes").update({ price: value }).not("id", "is", null).select("id");
+    if (error) {
+        return res.status(500).json({ error: error.message });
+    }
+    res.json({ count: data ? data.length : 0 });
+});
+
+// Bulk discount — applies (or clears) a discount to every perfume matching a filter
+// (gender, brand, or a hand-picked list of perfume ids) instead of editing rows one by one.
+app.post("/dashboard/pricing/discount", requireAuth, async (req, res) => {
+    const { action, filterType, filterValue, discountPercent } = req.body;
+    const value = action === "clear" ? null : Math.min(100, Math.max(0, Number(discountPercent) || 0));
+
+    let query = supabaseAdmin.from("perfumes").update({ discount_percent: value });
+
+    if (filterType === "gender") {
+        query = query.eq("gender", filterValue);
+    } else if (filterType === "brand") {
+        query = query.eq("brand", filterValue);
+    } else if (filterType === "perfumes") {
+        const ids = (filterValue || "")
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+        if (ids.length === 0) {
+            return res.status(400).json({ error: "No hay perfumes seleccionados." });
+        }
+        query = query.in("id", ids);
+    } else {
+        query = query.not("id", "is", null);
+    }
+
+    const { data, error } = await query.select("id");
+    if (error) {
+        return res.status(500).json({ error: error.message });
+    }
+    res.json({ count: data ? data.length : 0 });
+});
+
+app.post("/dashboard/promotions", requireAuth, async (req, res) => {
+    const { text } = req.body;
+    if (!text || !text.trim()) {
+        return res.redirect("/dashboard?promoError=La promoción no puede estar vacía#precios");
+    }
+
+    const { error } = await supabaseAdmin.from("promotions").insert({ text: text.trim() });
+    if (error) {
+        return res.redirect(`/dashboard?promoError=${encodeURIComponent(error.message)}#precios`);
+    }
+    res.redirect("/dashboard?promoMsg=Promoción agregada#precios");
+});
+
+app.post("/dashboard/promotions/:id/delete", requireAuth, async (req, res) => {
+    const { error } = await supabaseAdmin.from("promotions").delete().eq("id", req.params.id);
+    if (error) {
+        return res.redirect(`/dashboard?promoError=${encodeURIComponent(error.message)}#precios`);
+    }
+    res.redirect("/dashboard?promoMsg=Promoción eliminada#precios");
+});
+
+// Public, read-only — powers the storefront carousel and the chat's "Promociones" reply.
+app.get("/api/promotions", async (req, res) => {
+    const promotions = await getPromotions();
+    res.json({ promotions: promotions.map((p) => ({ id: p.id, text: p.text })) });
 });
 
 // Public, read-only — powers the storefront grid on the home page.

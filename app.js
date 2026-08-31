@@ -48,7 +48,9 @@ function transformPerfume(row) {
         tags,
         cardTags,
         notes,
-        price: row.price ?? null, // not collected by the dashboard yet
+        price: row.price ?? null,
+        discountPercent: row.discount_percent > 0 ? row.discount_percent : null,
+        finalPrice: row.price != null && row.discount_percent > 0 ? row.price * (1 - row.discount_percent / 100) : row.price ?? null,
         stockQuantity: row.stock_quantity ?? null,
         inStock: row.stock_quantity != null ? row.stock_quantity >= 1 : null,
         image: row.image_url
@@ -67,6 +69,110 @@ async function loadPerfumes() {
     render();
 }
 
+// ===== Promotions carousel — big rotating banner below the grid, list managed from
+// the dashboard's Precios tab =====
+let promoCarouselTimer = null;
+
+async function loadPromoCarousel() {
+    try {
+        const res = await fetch("/api/promotions");
+        const data = await res.json();
+        const promotions = Array.isArray(data.promotions) ? data.promotions : [];
+        if (promotions.length === 0) return;
+
+        const section = document.getElementById("promoCarousel");
+        const track = document.getElementById("promoCarouselTrack");
+        const dotsWrap = document.getElementById("promoCarouselDots");
+
+        track.innerHTML = promotions
+            .map((p, i) => `<div class="promo-slide${i === 0 ? " active" : ""}"><p class="promo-slide-text">${escapeHtml(p.text)}</p></div>`)
+            .join("");
+        dotsWrap.innerHTML =
+            promotions.length > 1
+                ? promotions
+                      .map((p, i) => `<button type="button" class="promo-dot${i === 0 ? " active" : ""}" data-index="${i}" aria-label="Promoción ${i + 1}"></button>`)
+                      .join("")
+                : "";
+
+        section.classList.remove("hidden");
+
+        const slides = track.querySelectorAll(".promo-slide");
+        const dots = dotsWrap.querySelectorAll(".promo-dot");
+        let current = 0;
+
+        function goTo(index) {
+            slides[current].classList.remove("active");
+            if (dots[current]) dots[current].classList.remove("active");
+            current = index;
+            slides[current].classList.add("active");
+            if (dots[current]) dots[current].classList.add("active");
+        }
+
+        function resetTimer() {
+            if (promoCarouselTimer) clearInterval(promoCarouselTimer);
+            if (slides.length > 1) {
+                promoCarouselTimer = setInterval(() => goTo((current + 1) % slides.length), 4500);
+            }
+        }
+
+        dots.forEach((dot) => {
+            dot.addEventListener("click", () => {
+                goTo(parseInt(dot.dataset.index, 10));
+                resetTimer();
+            });
+        });
+
+        // ===== Drag/swipe support (mouse + touch, via Pointer Events) =====
+        if (slides.length > 1) {
+            track.classList.add("promo-draggable");
+            let dragStartX = 0;
+            let dragDeltaX = 0;
+            let dragging = false;
+
+            track.addEventListener("pointerdown", (e) => {
+                dragging = true;
+                dragStartX = e.clientX;
+                dragDeltaX = 0;
+                track.setPointerCapture(e.pointerId);
+                track.classList.add("dragging");
+                if (promoCarouselTimer) clearInterval(promoCarouselTimer);
+            });
+
+            track.addEventListener("pointermove", (e) => {
+                if (!dragging) return;
+                dragDeltaX = e.clientX - dragStartX;
+                slides[current].style.transform = `translateX(${dragDeltaX}px)`;
+            });
+
+            function endDrag() {
+                if (!dragging) return;
+                dragging = false;
+                track.classList.remove("dragging");
+                slides[current].style.transform = "";
+
+                const threshold = 50;
+                if (dragDeltaX > threshold) {
+                    goTo((current - 1 + slides.length) % slides.length);
+                } else if (dragDeltaX < -threshold) {
+                    goTo((current + 1) % slides.length);
+                }
+                dragDeltaX = 0;
+                resetTimer();
+            }
+
+            track.addEventListener("pointerup", endDrag);
+            track.addEventListener("pointercancel", endDrag);
+            track.addEventListener("pointerleave", () => {
+                if (dragging) endDrag();
+            });
+        }
+
+        resetTimer();
+    } catch (err) {
+        console.error("Failed to load promo carousel:", err);
+    }
+}
+
 // ===== DOM refs =====
 const grid = document.getElementById("grid");
 const emptyState = document.getElementById("emptyState");
@@ -77,7 +183,6 @@ const modalContent = document.getElementById("modalContent");
 const starField = document.getElementById("starField");
 const menuBtn = document.getElementById("menuBtn");
 const exploreBtn = document.getElementById("exploreBtn");
-const featuredBtn = document.getElementById("featuredBtn");
 const drawer = document.getElementById("drawer");
 const drawerOverlay = document.getElementById("drawerOverlay");
 const closeDrawer = document.getElementById("closeDrawer");
@@ -143,6 +248,20 @@ function stockBadge(inStock) {
         : `<span class="stock-badge out-of-stock">Sold Out</span>`;
 }
 
+// Shared price markup for both the card and the detail modal — plain price normally,
+// or a strikethrough original + discounted price + "-N%" pill when on sale.
+function priceMarkup(p, { size = "text-xs" } = {}) {
+    if (p.price == null) return "";
+    if (p.discountPercent) {
+        return `<div class="flex items-center justify-center gap-2 flex-wrap">
+            <span class="font-body-md ${size} text-on-surface-variant line-through opacity-60">$${p.price.toFixed(2)}</span>
+            <span class="font-body-md ${size} text-primary font-bold">$${p.finalPrice.toFixed(2)}</span>
+            <span class="text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-300">-${p.discountPercent}%</span>
+        </div>`;
+    }
+    return `<p class="font-body-md ${size} text-on-surface-variant">$${p.price.toFixed(2)}</p>`;
+}
+
 // ===== Render grid =====
 function render() {
     const term = searchTerm.trim().toLowerCase();
@@ -166,10 +285,10 @@ function render() {
             <div class="relative aspect-[3/4] mb-4 overflow-hidden rounded-lg bg-surface-container-high flex items-center justify-center">
                 ${
                     p.image
-                        ? `<img alt="${escapeHtml(p.name)}" class="w-3/4 h-3/4 object-contain transition-transform duration-700 -translate-x-10 group-hover:scale-110" src="${escapeHtml(p.image)}"/>`
+                        ? `<img alt="${escapeHtml(p.name)}" class="w-3/4 h-3/4 object-contain transition-transform duration-700 -translate-x-5 group-hover:scale-110" src="${escapeHtml(p.image)}"/>`
                         : `<span class="text-on-surface-variant text-[10px] uppercase tracking-widest">No Photo</span>`
                 }
-                <img alt="" aria-hidden="true" class="absolute inset-0 w-full h-full object-contain pointer-events-none select-none opacity-80 transition-transform duration-700 scale-50 translate-x-12 translate-y-8 group-hover:scale-[0.55]" src="NyxPerfum.png" onerror="this.style.display='none'"/>
+                <img alt="" aria-hidden="true" class="absolute inset-0 w-full h-full object-contain pointer-events-none select-none opacity-80 transition-transform duration-700 scale-50 translate-x-6 translate-y-6 group-hover:scale-[0.55]" src="NyxPerfum.png" onerror="this.style.display='none'"/>
                 <div class="absolute top-2 left-2">${stockBadge(p.inStock)}</div>
                 ${
                     p.gender
@@ -183,9 +302,9 @@ function render() {
             <div class="text-center space-y-1.5">
                 <p class="font-label-sm text-[10px] text-primary tracking-[0.2em] uppercase">${escapeHtml(p.brand) || "NYX"}</p>
                 <h3 class="font-display-lg text-base text-on-surface leading-tight">${escapeHtml(p.name)}</h3>
-                ${p.price != null ? `<p class="font-body-md text-xs text-on-surface-variant">$${p.price}</p>` : ""}
+                ${priceMarkup(p)}
                 <div class="flex justify-center gap-1 flex-nowrap">
-                    ${p.cardTags.map((t) => `<span class="text-[8px] uppercase tracking-widest px-2 py-0.5 border border-white/10 rounded-full text-on-surface-variant whitespace-nowrap">${escapeHtml(t)}</span>`).join("")}
+                    ${p.cardTags.map((t) => `<span class="text-[8px] uppercase tracking-widest px-2 py-0.5 border border-white/10 rounded-full text-on-surface-variant whitespace-nowrap overflow-hidden text-ellipsis max-w-[72px]" title="${escapeHtml(t)}">${escapeHtml(t)}</span>`).join("")}
                 </div>
                 ${
                     p.inStock !== false
@@ -241,38 +360,44 @@ const revealObserver = new IntersectionObserver(
 // ===== Modal =====
 function openModal(p) {
     modalContent.innerHTML = `
-        <div class="flex justify-between items-start mb-6">
+        <div class="flex justify-between items-start mb-4 flex-shrink-0">
             <p class="font-label-sm text-label-sm text-primary tracking-[0.2em] uppercase">${escapeHtml(p.brand) || "NYX"}</p>
             <button id="closeModal" class="text-on-surface-variant hover:text-on-surface">
                 <span class="material-symbols-outlined">close</span>
             </button>
         </div>
-        ${p.image ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" style="width:100%;height:260px;object-fit:contain" class="mb-6"/>` : ""}
-        <h2 class="font-display-lg text-3xl text-on-surface mb-2">${escapeHtml(p.name)}</h2>
-        ${p.gender ? `<span class="inline-block text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-4 ${genderBadgeClasses(p.gender)}">${escapeHtml(genderLabel(p.gender))}</span>` : ""}
-        <div class="flex items-center justify-between mb-6">
-            ${p.price != null ? `<p class="font-body-md text-on-surface-variant">$${p.price}</p>` : "<span></span>"}
+        ${p.image ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" style="width:100%;height:190px;object-fit:contain" class="mb-4 flex-shrink-0"/>` : ""}
+        <h2 class="font-display-lg text-3xl text-on-surface mb-2 flex-shrink-0">${escapeHtml(p.name)}</h2>
+        ${p.gender ? `<span class="inline-block text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3 flex-shrink-0 ${genderBadgeClasses(p.gender)}">${escapeHtml(genderLabel(p.gender))}</span>` : ""}
+        <div class="flex items-center justify-between mb-4 flex-shrink-0">
+            ${p.price != null ? priceMarkup(p, { size: "text-sm" }) : "<span></span>"}
             ${stockBadge(p.inStock)}
         </div>
-        ${p.description ? `<p class="font-body-md text-sm text-on-surface-variant mb-6">${escapeHtml(p.description)}</p>` : ""}
-        <h3 class="font-label-sm text-label-sm text-primary uppercase tracking-[0.2em] mb-3">Notes</h3>
-        <div class="space-y-2 font-body-md text-sm text-on-surface-variant mb-6">
-            <p><b class="text-on-surface">Top:</b> ${escapeHtml(p.notes.top.join(", ")) || "—"}</p>
-            <p><b class="text-on-surface">Middle:</b> ${escapeHtml(p.notes.middle.join(", ")) || "—"}</p>
-            <p><b class="text-on-surface">Base:</b> ${escapeHtml(p.notes.base.join(", ")) || "—"}</p>
+
+        <div class="modal-scroll-area">
+            ${p.description ? `<p class="font-body-md text-sm text-on-surface-variant mb-6">${escapeHtml(p.description)}</p>` : ""}
+            <h3 class="font-label-sm text-label-sm text-primary uppercase tracking-[0.2em] mb-3">Notes</h3>
+            <div class="space-y-2 font-body-md text-sm text-on-surface-variant">
+                <p><b class="text-on-surface">Top:</b> ${escapeHtml(p.notes.top.join(", ")) || "—"}</p>
+                <p><b class="text-on-surface">Middle:</b> ${escapeHtml(p.notes.middle.join(", ")) || "—"}</p>
+                <p><b class="text-on-surface">Base:</b> ${escapeHtml(p.notes.base.join(", ")) || "—"}</p>
+            </div>
         </div>
-        ${
-            p.inStock === false
-                ? `<button type="button" class="w-full py-3.5 rounded-full bg-white/5 text-on-surface-variant text-[11px] uppercase tracking-[0.15em] cursor-not-allowed" disabled>Agotado</button>`
-                : `<button type="button" id="modalAddToCart" class="modal-cart-btn">
-                    <span class="material-symbols-outlined text-base icon-add">add_shopping_cart</span>
-                    <span class="material-symbols-outlined text-base icon-check">check</span>
-                    <span class="material-symbols-outlined text-base icon-remove">delete</span>
-                    <span class="label-add">Agregar a Carrito</span>
-                    <span class="label-check">En el Carrito</span>
-                    <span class="label-remove">Quitar del Carrito</span>
-                  </button>`
-        }
+
+        <div class="flex-shrink-0 pt-4">
+            ${
+                p.inStock === false
+                    ? `<button type="button" class="w-full py-3.5 rounded-full bg-white/5 text-on-surface-variant text-[11px] uppercase tracking-[0.15em] cursor-not-allowed" disabled>Agotado</button>`
+                    : `<button type="button" id="modalAddToCart" class="modal-cart-btn">
+                        <span class="material-symbols-outlined text-base icon-add">add_shopping_cart</span>
+                        <span class="material-symbols-outlined text-base icon-check">check</span>
+                        <span class="material-symbols-outlined text-base icon-remove">delete</span>
+                        <span class="label-add">Agregar a Carrito</span>
+                        <span class="label-check">En el Carrito</span>
+                        <span class="label-remove">Quitar del Carrito</span>
+                      </button>`
+            }
+        </div>
     `;
     modal.classList.remove("hidden");
     document.documentElement.classList.add("modal-open");
@@ -333,11 +458,6 @@ exploreBtn.addEventListener("click", () => {
     document.getElementById("collection").scrollIntoView({ behavior: "smooth" });
 });
 
-featuredBtn.addEventListener("click", () => {
-    const featured = products.find((p) => p.name === "Midnight Muse");
-    if (featured) openModal(featured);
-});
-
 // ===== Nav Drawer =====
 function openDrawer() {
     drawer.classList.add("open");
@@ -379,6 +499,7 @@ updateAuthLink();
 
 // ===== Init =====
 loadPerfumes();
+loadPromoCarousel();
 
 // ===== Keep bottom-fixed floating buttons pinned during mobile scroll =====
 // Mobile browsers resize the layout viewport asynchronously as their address bar

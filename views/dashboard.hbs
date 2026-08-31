@@ -114,6 +114,55 @@
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
+    /* ===== Precios: sub-tabs (Promociones / Precio / Descuento) ===== */
+    .precios-subtabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+    .precios-subtab-btn {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: #c9c5cb;
+        padding: 8px 18px;
+        border-radius: 9999px;
+        font-family: "Manrope", sans-serif;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        cursor: pointer;
+    }
+    .precios-subtab-btn.active {
+        border-color: #cdbefb;
+        color: #cdbefb;
+        background: rgba(205, 190, 251, 0.08);
+    }
+    .precios-subpanel { display: none; }
+    .precios-subpanel.active { display: block; }
+
+    /* Mirrors the storefront's actual promo carousel styling, so this is a real
+       preview of what the banner looks like, not just a text sample. */
+    .promo-preview-box {
+        background: linear-gradient(180deg, #141314 0%, #1c1140 35%, #2d1a4f 50%, #1c1140 65%, #141314 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 40px 24px;
+        min-height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+    .promo-preview-text {
+        font-family: "Bodoni Moda", serif;
+        font-weight: 400;
+        font-size: 22px;
+        line-height: 1.3;
+        color: #ffffff;
+        margin: 0;
+        transition: opacity 0.4s ease;
+    }
+
     .panel-header {
         display: flex;
         justify-content: space-between;
@@ -266,6 +315,7 @@
         padding: 20px;
     }
     .modal-overlay.hidden { display: none; }
+    .error.hidden, .success.hidden { display: none; }
     .modal-form {
         background: #1c1b1c;
         border: 1px solid rgba(255, 255, 255, 0.08);
@@ -465,6 +515,87 @@
     .autocomplete-option:hover,
     .autocomplete-option.active {
         background: rgba(205, 190, 251, 0.12);
+    }
+
+    /* ===== Discount tools: perfume checklist + "currently discounted" list ===== */
+    .discount-checklist {
+        max-height: 260px;
+        overflow-y: auto;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 6px;
+        background: rgba(255, 255, 255, 0.02);
+    }
+    .discount-checklist-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 10px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        transition: background 0.15s ease;
+    }
+    .discount-checklist-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    .discount-checklist-item.checked {
+        background: rgba(205, 190, 251, 0.14);
+    }
+    .discount-checklist-item input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+        accent-color: #cdbefb;
+        cursor: pointer;
+    }
+    .discount-checklist-item .item-brand {
+        color: #c9c5cb;
+    }
+    .discount-checklist-item .item-gender {
+        margin-left: auto;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #6e6a72;
+        flex-shrink: 0;
+    }
+
+    .discounted-perfume-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 12px 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+    }
+    .discounted-perfume-row .row-name {
+        flex: 1;
+        min-width: 160px;
+        font-size: 13px;
+    }
+    .discounted-perfume-row .row-name .row-brand {
+        color: #cdbefb;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        display: block;
+        margin-bottom: 2px;
+    }
+    .discounted-perfume-row .discount-pill {
+        background: rgba(255, 180, 171, 0.14);
+        color: #ffb4ab;
+        font-weight: 700;
+        font-size: 12px;
+        padding: 4px 12px;
+        border-radius: 9999px;
+        flex-shrink: 0;
+    }
+    .discounted-perfume-row input[type="number"] {
+        width: 70px;
+        flex-shrink: 0;
     }
 
     .table-controls {
@@ -692,6 +823,7 @@
 <div class="tabs">
     <button class="tab-btn" data-tab="inventario">Inventario</button>
     <button class="tab-btn" data-tab="catalogo">Catálogo</button>
+    <button class="tab-btn" data-tab="precios">Precios</button>
     <button class="tab-btn" data-tab="marcas">Marcas</button>
     <button class="tab-btn" data-tab="modelos">Modelos</button>
     {{#if isAdmin}}
@@ -701,6 +833,7 @@
 <select class="mobile-tab-select" id="mobileTabSelect">
     <option value="inventario">Inventario</option>
     <option value="catalogo">Catálogo</option>
+    <option value="precios">Precios</option>
     <option value="marcas">Marcas</option>
     <option value="modelos">Modelos</option>
     {{#if isAdmin}}
@@ -786,6 +919,113 @@
             <span id="catalogoIndicator"></span>
             <button type="button" class="pagination-btn" id="catalogoNextBtn">Siguiente &rarr;</button>
         </div>
+    </div>
+</section>
+
+<section id="precios" class="tab-panel">
+    {{#if perfumeMsg}}<p class="success">{{perfumeMsg}}</p>{{/if}}
+    {{#if perfumeError}}<p class="error">{{perfumeError}}</p>{{/if}}
+    <div class="panel-header">
+        <h2>Precios y Promociones</h2>
+    </div>
+    <p style="font-size:12px;color:#6e6a72;margin-top:-14px;margin-bottom:20px;">Ajustá el precio, los descuentos y las promociones que se muestran en la tienda y que el chat contempla al responder.</p>
+
+    <div class="precios-subtabs">
+        <button type="button" class="precios-subtab-btn" data-subtab="promociones">Promociones</button>
+        <button type="button" class="precios-subtab-btn" data-subtab="precio">Precio</button>
+        <button type="button" class="precios-subtab-btn" data-subtab="descuento">Descuento</button>
+    </div>
+
+    <p id="bulkPricingMsg" class="success hidden"></p>
+    <p id="bulkPricingError" class="error hidden"></p>
+
+    <div id="preciosSubPromociones" class="precios-subpanel">
+        {{#if promoMsg}}<p class="success">{{promoMsg}}</p>{{/if}}
+        {{#if promoError}}<p class="error">{{promoError}}</p>{{/if}}
+        <p id="promotionFormError" class="error hidden"></p>
+        <form id="promotionForm" class="inline-form">
+            <div class="field" style="flex:1;min-width:240px;">
+                <label for="newPromotionText">Nueva promoción</label>
+                <input id="newPromotionText" name="text" type="text" placeholder="Ej: 15% de descuento en toda la tienda" required/>
+            </div>
+            <button type="submit" class="primary-btn">Agregar</button>
+        </form>
+
+        <table class="responsive-table" style="margin-bottom:28px;">
+            <thead>
+            <tr><th>Promoción</th><th></th></tr>
+            </thead>
+            <tbody id="promotionsTableBody"></tbody>
+        </table>
+
+        <h4 style="font-family:'Bodoni Moda',serif;font-weight:400;margin:0 0 10px;font-size:15px;color:#c9c5cb;">Vista previa del banner</h4>
+        <p style="font-size:12px;color:#6e6a72;margin:0 0 12px;">Así se ve el banner grande que rota en la tienda, debajo del catálogo.</p>
+        <div class="promo-preview-box">
+            <p class="promo-preview-text" id="promoPreviewText"></p>
+        </div>
+
+        <script id="promotionsData" type="application/json">{{{json promotions}}}</script>
+    </div>
+
+    <div id="preciosSubPrecio" class="precios-subpanel">
+        <p style="font-size:12px;color:#6e6a72;margin-top:0;margin-bottom:16px;">Todos los perfumes tienen el mismo precio — se aplica a todo el catálogo de una sola vez.</p>
+        <form id="bulkPriceForm" style="display:flex;gap:12px;align-items:end;flex-wrap:wrap;">
+            <div class="field" style="max-width:160px;">
+                <label for="bulkPriceInput">Precio</label>
+                <input id="bulkPriceInput" type="number" min="0" step="0.01" placeholder="0.00"/>
+            </div>
+            <button type="submit" class="primary-btn">Aplicar a todos</button>
+        </form>
+    </div>
+
+    <div id="preciosSubDescuento" class="precios-subpanel">
+        <p style="font-size:12px;color:#6e6a72;margin-top:0;margin-bottom:16px;">Aplicá o quitá un descuento a un grupo de perfumes sin tener que editarlos uno por uno.</p>
+
+        <div style="display:flex;flex-direction:column;gap:14px;max-width:560px;padding:20px;background:rgba(255,255,255,0.03);border-radius:12px;border:1px solid rgba(255,255,255,0.06);margin-bottom:16px;">
+            <div class="field">
+                <label for="discountFilterType">Aplicar a</label>
+                <select id="discountFilterType">
+                    <option value="all">Todos los perfumes</option>
+                    <option value="gender">Por género</option>
+                    <option value="brand">Por marca</option>
+                    <option value="perfumes">Perfumes específicos</option>
+                </select>
+            </div>
+
+            <div class="field" id="discountGenderField" style="display:none;">
+                <label for="discountGenderSelect">Género</label>
+                <select id="discountGenderSelect">
+                    <option value="masculino">Masculino</option>
+                    <option value="femenino">Femenino</option>
+                    <option value="unisex">Unisex</option>
+                </select>
+            </div>
+
+            <div class="field" id="discountBrandField" style="display:none;">
+                <label for="discountBrandSelect">Marca</label>
+                <select id="discountBrandSelect"></select>
+            </div>
+
+            <div class="field" id="discountPerfumesField" style="display:none;">
+                <label for="discountPerfumesFilter">Buscar y tildar perfumes</label>
+                <input id="discountPerfumesFilter" type="text" placeholder="Marca o modelo..." style="margin-bottom:8px;"/>
+                <div id="discountPerfumesChecklist" class="discount-checklist"></div>
+            </div>
+
+            <div class="field" style="max-width:160px;">
+                <label for="discountPercentInput">Descuento %</label>
+                <input id="discountPercentInput" type="number" min="0" max="100" step="1" placeholder="0"/>
+            </div>
+
+            <div class="modal-actions" style="margin-top:0;">
+                <button type="button" id="applyDiscountBtn" class="primary-btn">Aplicar descuento</button>
+                <button type="button" id="clearDiscountBtn" class="cancel-btn">Quitar descuento</button>
+            </div>
+        </div>
+
+        <h3 style="font-family:'Bodoni Moda',serif;font-weight:400;margin:32px 0 6px;font-size:18px;">Perfumes con descuento actual</h3>
+        <p style="font-size:12px;color:#6e6a72;margin:0 0 16px;">Así podés ver de un vistazo qué perfumes tienen un descuento activo, y cambiarlo o quitarlo sin pasar por el buscador de arriba.</p>
+        <div id="discountedPerfumesList"></div>
     </div>
 </section>
 
@@ -956,9 +1196,19 @@
                 </select>
             </div>
         </div>
-        <div class="field" style="max-width:160px;">
-            <label for="perfumeStockQuantity">Cantidad en stock</label>
-            <input id="perfumeStockQuantity" name="stockQuantity" type="number" min="0" step="1" value="1"/>
+        <div class="form-row">
+            <div class="field" style="max-width:160px;">
+                <label for="perfumeStockQuantity">Cantidad en stock</label>
+                <input id="perfumeStockQuantity" name="stockQuantity" type="number" min="0" step="1" value="1"/>
+            </div>
+            <div class="field" style="max-width:160px;">
+                <label for="perfumePrice">Precio</label>
+                <input id="perfumePrice" name="price" type="number" min="0" step="0.01" placeholder="0.00"/>
+            </div>
+            <div class="field" style="max-width:160px;">
+                <label for="perfumeDiscount">Descuento %</label>
+                <input id="perfumeDiscount" name="discountPercent" type="number" min="0" max="100" step="1" placeholder="0"/>
+            </div>
         </div>
         <div class="field">
             <label>Photo</label>
@@ -1037,6 +1287,21 @@
     const initialTab = window.location.hash.replace("#", "") || "inventario";
     activateTab(document.getElementById(initialTab) ? initialTab : "inventario");
 
+    // ===== Precios: Promociones / Precio / Descuento sub-tabs =====
+    const preciosSubtabButtons = document.querySelectorAll(".precios-subtab-btn");
+    const preciosSubpanels = document.querySelectorAll(".precios-subpanel");
+
+    function activatePreciosSubtab(name) {
+        preciosSubtabButtons.forEach((b) => b.classList.toggle("active", b.dataset.subtab === name));
+        preciosSubpanels.forEach((p) => p.classList.toggle("active", p.id === `preciosSub${name.charAt(0).toUpperCase()}${name.slice(1)}`));
+    }
+
+    preciosSubtabButtons.forEach((btn) => {
+        btn.addEventListener("click", () => activatePreciosSubtab(btn.dataset.subtab));
+    });
+
+    activatePreciosSubtab("promociones");
+
     // ===== Mobile: tap a collapsed row to reveal its hidden (.mobile-detail) fields =====
     // and edit/delete actions. No-op on desktop, where .mobile-detail is always visible.
     function bindCollapsibleRow(tr) {
@@ -1084,6 +1349,8 @@
         document.getElementById("perfumeModel").value = perfume.model || "";
         document.getElementById("perfumeGender").value = perfume.gender || "";
         document.getElementById("perfumeStockQuantity").value = perfume.stock_quantity ?? 0;
+        document.getElementById("perfumePrice").value = perfume.price ?? "";
+        document.getElementById("perfumeDiscount").value = perfume.discount_percent ?? "";
         document.getElementById("notesTop").value = perfume.notes_top || "";
         document.getElementById("notesMiddle").value = perfume.notes_middle || "";
         document.getElementById("notesBase").value = perfume.notes_base || "";
@@ -1305,6 +1572,108 @@
     refFilterInput.addEventListener("input", renderReferencePerfumes);
     renderReferencePerfumes();
 
+    // ===== Promociones: instant add/delete via fetch — no page reload =====
+    let PROMOTIONS = JSON.parse(document.getElementById("promotionsData").textContent || "[]");
+    const promotionsTableBody = document.getElementById("promotionsTableBody");
+    const promotionForm = document.getElementById("promotionForm");
+    const promotionFormError = document.getElementById("promotionFormError");
+
+    function renderPromotionsTable() {
+        promotionsTableBody.innerHTML = "";
+
+        if (PROMOTIONS.length === 0) {
+            promotionsTableBody.innerHTML = `<tr class="empty-row"><td colspan="2">No hay promociones. Agregá una arriba.</td></tr>`;
+            return;
+        }
+
+        PROMOTIONS.forEach((promo) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td data-label="Promoción">${escapeHtml(promo.text)}</td>
+                <td class="row-actions">
+                    <button type="button" class="text-btn delete-promotion-btn" data-id="${escapeHtml(promo.id)}">Eliminar</button>
+                </td>
+            `;
+            tr.querySelector(".delete-promotion-btn").addEventListener("click", () => deletePromotion(promo.id));
+            promotionsTableBody.appendChild(tr);
+        });
+    }
+
+    // fetch() silently follows the /login redirect requireAuth issues on an expired
+    // session and reports it as a 200 OK "success" — check the final URL too, or a
+    // lapsed session would look like a successful save/delete that never happened.
+    function isAuthRedirect(res) {
+        return res.url.includes("/login");
+    }
+
+    async function deletePromotion(id) {
+        if (!confirm("¿Eliminar esta promoción?")) return;
+        try {
+            const res = await fetch(`/dashboard/promotions/${id}/delete`, { method: "POST" });
+            if (!res.ok || isAuthRedirect(res)) throw new Error("request failed");
+            PROMOTIONS = PROMOTIONS.filter((p) => p.id !== id);
+            renderPromotionsTable();
+            promoPreviewIndex = 0;
+            renderPromoPreview();
+        } catch (err) {
+            console.error("Failed to delete promotion:", err);
+            alert("No se pudo eliminar la promoción — tu sesión puede haber expirado. Recargá la página e intentá de nuevo.");
+        }
+    }
+
+    promotionForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const input = document.getElementById("newPromotionText");
+        const text = input.value.trim();
+        if (!text) return;
+
+        promotionFormError.classList.add("hidden");
+        try {
+            const res = await fetch("/dashboard/promotions", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({ text })
+            });
+            if (!res.ok || isAuthRedirect(res)) throw new Error("request failed");
+
+            // The route redirects rather than returning JSON, so re-fetch the public list
+            // to pick up the new row's real id (needed so its delete button works).
+            const listRes = await fetch("/api/promotions");
+            const data = await listRes.json();
+            PROMOTIONS = Array.isArray(data.promotions) ? data.promotions : PROMOTIONS;
+
+            input.value = "";
+            renderPromotionsTable();
+            promoPreviewIndex = 0;
+            renderPromoPreview();
+        } catch (err) {
+            console.error("Failed to add promotion:", err);
+            promotionFormError.textContent = "No se pudo agregar la promoción — tu sesión puede haber expirado. Recargá la página e intentá de nuevo.";
+            promotionFormError.classList.remove("hidden");
+        }
+    });
+
+    renderPromotionsTable();
+
+    // Live preview of the storefront's promo carousel — cycles through PROMOTIONS the
+    // same way the real banner does, so there's no need to open the site to check it.
+    let promoPreviewIndex = 0;
+    function renderPromoPreview() {
+        const textEl = document.getElementById("promoPreviewText");
+        if (!textEl) return;
+        if (PROMOTIONS.length === 0) {
+            textEl.textContent = "Agregá una promoción arriba para ver cómo se ve en la tienda.";
+            return;
+        }
+        if (promoPreviewIndex >= PROMOTIONS.length) promoPreviewIndex = 0;
+        textEl.textContent = PROMOTIONS[promoPreviewIndex].text;
+    }
+    setInterval(() => {
+        promoPreviewIndex = (promoPreviewIndex + 1) % Math.max(PROMOTIONS.length, 1);
+        renderPromoPreview();
+    }, 3500);
+    renderPromoPreview();
+
     // ===== Perfumes tables: filter + pagination (Inventario = in-stock only, Catálogo = all) =====
     const ALL_PERFUMES = JSON.parse(document.getElementById("perfumesData").textContent || "[]");
 
@@ -1495,6 +1864,206 @@
 
     inventarioTable.render();
     catalogoTable.render();
+
+    // ===== Precio general: one price applied to the whole catalog at once =====
+    const bulkPriceForm = document.getElementById("bulkPriceForm");
+    const bulkPricingMsg = document.getElementById("bulkPricingMsg");
+    const bulkPricingError = document.getElementById("bulkPricingError");
+
+    function showBulkPricingResult(ok, text) {
+        bulkPricingMsg.classList.toggle("hidden", !ok);
+        bulkPricingError.classList.toggle("hidden", ok);
+        (ok ? bulkPricingMsg : bulkPricingError).textContent = text;
+    }
+
+    bulkPriceForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const price = document.getElementById("bulkPriceInput").value;
+        try {
+            const res = await fetch("/dashboard/pricing/price", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({ price })
+            });
+            if (!res.ok || isAuthRedirect(res)) throw new Error("request failed");
+            const data = await res.json();
+            showBulkPricingResult(true, `Precio actualizado en ${data.count} perfumes.`);
+        } catch (err) {
+            console.error("Failed to update bulk price:", err);
+            showBulkPricingResult(false, "No se pudo actualizar el precio — tu sesión puede haber expirado. Recargá la página.");
+        }
+    });
+
+    // ===== Descuentos por grupo: apply/clear a discount to perfumes matching a filter,
+    // instead of needing to edit every single perfume by hand =====
+    const discountFilterType = document.getElementById("discountFilterType");
+    const discountGenderField = document.getElementById("discountGenderField");
+    const discountBrandField = document.getElementById("discountBrandField");
+    const discountPerfumesField = document.getElementById("discountPerfumesField");
+    const discountBrandSelect = document.getElementById("discountBrandSelect");
+    const discountPerfumesFilter = document.getElementById("discountPerfumesFilter");
+    const discountPerfumesChecklist = document.getElementById("discountPerfumesChecklist");
+
+    discountBrandSelect.innerHTML = ALL_BRANDS.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("");
+
+    // Checkboxes stay in the DOM (hidden via display, not removed) while filtering, so
+    // ticked selections survive typing in the search box.
+    function renderDiscountChecklist() {
+        discountPerfumesChecklist.innerHTML = ALL_PERFUMES.map(
+            (p) => `
+                <label class="discount-checklist-item" data-search="${escapeHtml(`${p.brand} ${p.model}`.toLowerCase())}">
+                    <input type="checkbox" value="${escapeHtml(p.id)}"/>
+                    <span class="item-brand">${escapeHtml(p.brand)}</span> — ${escapeHtml(p.model)}
+                    ${p.gender ? `<span class="item-gender">${escapeHtml(genderLabel(p.gender))}</span>` : ""}
+                </label>
+            `
+        ).join("");
+
+        discountPerfumesChecklist.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+            cb.addEventListener("change", () => {
+                cb.closest(".discount-checklist-item").classList.toggle("checked", cb.checked);
+            });
+        });
+    }
+    renderDiscountChecklist();
+
+    discountPerfumesFilter.addEventListener("input", () => {
+        const term = discountPerfumesFilter.value.trim().toLowerCase();
+        discountPerfumesChecklist.querySelectorAll("label").forEach((label) => {
+            label.style.display = !term || label.dataset.search.includes(term) ? "flex" : "none";
+        });
+    });
+
+    function updateDiscountFieldVisibility() {
+        const type = discountFilterType.value;
+        discountGenderField.style.display = type === "gender" ? "block" : "none";
+        discountBrandField.style.display = type === "brand" ? "block" : "none";
+        discountPerfumesField.style.display = type === "perfumes" ? "block" : "none";
+    }
+    discountFilterType.addEventListener("change", updateDiscountFieldVisibility);
+    updateDiscountFieldVisibility();
+
+    async function submitBulkDiscount(action) {
+        const filterType = discountFilterType.value;
+        let filterValue = "";
+        if (filterType === "gender") {
+            filterValue = document.getElementById("discountGenderSelect").value;
+        } else if (filterType === "brand") {
+            filterValue = discountBrandSelect.value;
+        } else if (filterType === "perfumes") {
+            filterValue = Array.from(discountPerfumesChecklist.querySelectorAll("input:checked"))
+                .map((cb) => cb.value)
+                .join(",");
+            if (!filterValue) {
+                showBulkPricingResult(false, "Tildá al menos un perfume.");
+                return;
+            }
+        }
+
+        const discountPercent = document.getElementById("discountPercentInput").value;
+        if (action === "apply" && (discountPercent === "" || Number(discountPercent) <= 0)) {
+            showBulkPricingResult(false, "Ingresá un porcentaje de descuento mayor a 0.");
+            return;
+        }
+
+        try {
+            const res = await fetch("/dashboard/pricing/discount", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({ action, filterType, filterValue, discountPercent })
+            });
+            if (!res.ok || isAuthRedirect(res)) throw new Error("request failed");
+            const data = await res.json();
+            showBulkPricingResult(
+                true,
+                action === "apply"
+                    ? `Descuento del ${discountPercent}% aplicado a ${data.count} perfumes.`
+                    : `Descuento removido de ${data.count} perfumes.`
+            );
+            await refreshAllPerfumes();
+        } catch (err) {
+            console.error("Failed to update bulk discount:", err);
+            showBulkPricingResult(false, "No se pudo actualizar el descuento — tu sesión puede haber expirado. Recargá la página.");
+        }
+    }
+
+    document.getElementById("applyDiscountBtn").addEventListener("click", () => submitBulkDiscount("apply"));
+    document.getElementById("clearDiscountBtn").addEventListener("click", () => submitBulkDiscount("clear"));
+
+    // ===== "Perfumes con descuento actual" — so a discount set earlier (e.g. from a
+    // group action) is still visible and editable afterward, one perfume at a time. =====
+    async function refreshAllPerfumes() {
+        try {
+            const res = await fetch("/api/perfumes");
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                ALL_PERFUMES.length = 0;
+                ALL_PERFUMES.push(...data);
+            }
+        } catch (err) {
+            console.error("Failed to refresh perfumes:", err);
+        }
+        inventarioTable.render();
+        catalogoTable.render();
+        renderDiscountedPerfumesList();
+    }
+
+    function renderDiscountedPerfumesList() {
+        const container = document.getElementById("discountedPerfumesList");
+        const discounted = ALL_PERFUMES.filter((p) => p.discount_percent != null && p.discount_percent > 0);
+
+        if (discounted.length === 0) {
+            container.innerHTML = `<p style="font-size:13px;color:#6e6a72;">Ningún perfume tiene descuento activo.</p>`;
+            return;
+        }
+
+        container.innerHTML = discounted
+            .map(
+                (p) => `
+                    <div class="discounted-perfume-row" data-id="${escapeHtml(p.id)}">
+                        <div class="row-name">
+                            <span class="row-brand">${escapeHtml(p.brand)}</span>
+                            ${escapeHtml(p.model)}
+                        </div>
+                        <span class="discount-pill">-${p.discount_percent}%</span>
+                        <input type="number" min="0" max="100" step="1" class="discount-row-input" value="${p.discount_percent}"/>
+                        <button type="button" class="text-btn update-discount-btn">Actualizar</button>
+                        <button type="button" class="text-btn remove-discount-btn">Quitar</button>
+                    </div>
+                `
+            )
+            .join("");
+
+        container.querySelectorAll(".update-discount-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                const row = btn.closest(".discounted-perfume-row");
+                applySingleDiscount(row.dataset.id, row.querySelector(".discount-row-input").value, "apply");
+            });
+        });
+        container.querySelectorAll(".remove-discount-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                applySingleDiscount(btn.closest(".discounted-perfume-row").dataset.id, 0, "clear");
+            });
+        });
+    }
+
+    async function applySingleDiscount(id, discountPercent, action) {
+        try {
+            const res = await fetch("/dashboard/pricing/discount", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({ action, filterType: "perfumes", filterValue: id, discountPercent })
+            });
+            if (!res.ok || isAuthRedirect(res)) throw new Error("request failed");
+            showBulkPricingResult(true, action === "apply" ? "Descuento actualizado." : "Descuento removido.");
+            await refreshAllPerfumes();
+        } catch (err) {
+            console.error("Failed to update discount:", err);
+            showBulkPricingResult(false, "No se pudo actualizar — tu sesión puede haber expirado. Recargá la página.");
+        }
+    }
+
+    renderDiscountedPerfumesList();
 </script>
 
 </body>

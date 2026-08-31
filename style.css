@@ -388,11 +388,93 @@ body {
 }
 
 .hero-gradient {
-    background: linear-gradient(180deg, #020111 0%, #0c0836 40%, #522d6d 75%, #cc7a52 100%);
+    /* Layered so it degrades gracefully: a tint over the image (readable text up top,
+       fading to a solid match of the page background at the bottom so the photo blends
+       into the section below instead of cutting off hard), then the custom background
+       image, then the original solid gradient as a fallback if that file is ever
+       missing (a missing background-image layer is simply transparent, so the gradient
+       shows through). */
+    background-image:
+        linear-gradient(180deg, rgba(2, 1, 17, 0.5) 0%, rgba(12, 8, 54, 0.3) 30%, rgba(82, 45, 109, 0.2) 55%, rgba(20, 19, 20, 0.75) 85%, #141314 100%),
+        url("hero-bg.png"),
+        linear-gradient(180deg, #020111 0%, #0c0836 40%, #522d6d 75%, #cc7a52 100%);
+    background-size: cover, cover, cover;
+    background-position: center, center, center;
+    background-repeat: no-repeat, no-repeat, no-repeat;
+}
+
+/* Used further down the page (e.g. the promo carousel), where hero-gradient's warm
+   orange tail would hard-cut into the page's near-black background right after it.
+   Fades back to that same background color (#141314) at both edges instead. */
+.promo-carousel-bg {
+    background: linear-gradient(180deg, #141314 0%, #1c1140 35%, #2d1a4f 50%, #1c1140 65%, #141314 100%);
 }
 
 .crescent-moon {
     filter: drop-shadow(0 0 10px rgba(255, 235, 153, 0.4));
+}
+
+/* ===== Promotions Carousel ===== */
+.promo-slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    pointer-events: none;
+    padding: 0 8px;
+}
+.promo-slide.active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+.promo-slide-text {
+    font-family: "Bodoni Moda", serif;
+    font-weight: 400;
+    font-size: 28px;
+    line-height: 1.3;
+    color: #ffffff;
+}
+@media (min-width: 768px) {
+    .promo-slide-text {
+        font-size: 52px;
+    }
+}
+.promo-draggable {
+    cursor: grab;
+    /* Lets vertical page scroll pass through untouched while our JS owns horizontal drag. */
+    touch-action: pan-y;
+    user-select: none;
+}
+.promo-draggable.dragging {
+    cursor: grabbing;
+}
+.promo-draggable.dragging .promo-slide.active {
+    /* Disabled only while actively dragging, so the slide tracks the pointer 1:1 instead
+       of lagging behind the normal 0.6s crossfade transition. Re-enabled the instant the
+       drag ends, so the snap-back/slide-change on release still animates smoothly. */
+    transition: none;
+}
+.promo-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.25);
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.3s ease;
+}
+.promo-dot:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+.promo-dot.active {
+    background: #cdbefb;
+    transform: scale(1.3);
 }
 
 /* ===== Logo fallback ===== */
@@ -503,14 +585,44 @@ body {
     border-radius: 26px;
     max-width: 480px;
     width: 100%;
+    /* Fixed height instead of growing/shrinking with description length — the header
+       (image/title/price) and footer (button) stay put, and only the text area below
+       scrolls internally when content overflows it. */
+    height: 680px;
     max-height: 90vh;
-    overflow-y: auto;
     padding: 32px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     animation: modalFade 0.35s ease;
 }
 @keyframes modalFade {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* Scrolls just the description/notes area, not the whole modal. */
+.modal-scroll-area {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 10px;
+    margin-right: -10px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(205, 190, 251, 0.4) transparent;
+}
+.modal-scroll-area::-webkit-scrollbar {
+    width: 6px;
+}
+.modal-scroll-area::-webkit-scrollbar-track {
+    background: transparent;
+}
+.modal-scroll-area::-webkit-scrollbar-thumb {
+    background: rgba(205, 190, 251, 0.4);
+    border-radius: 9999px;
+}
+.modal-scroll-area::-webkit-scrollbar-thumb:hover {
+    background: rgba(205, 190, 251, 0.7);
 }
 
 /* ===== Add-to-cart / remove-from-cart toggle (card icon button) ===== */

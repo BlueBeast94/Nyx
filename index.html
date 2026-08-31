@@ -148,12 +148,6 @@ Explore Collection
 </div>
 </div>
 
-<div class="skyline-svg">
-<svg class="w-full h-48 md:h-64" fill="#0c0836" preserveAspectRatio="none" viewBox="0 0 1440 320" xmlns="http://www.w3.org/2000/svg">
-<path d="M0 320V240H40V280H80V200H120V260H160V180H200V240H240V120H280V220H320V160H360V240H400V100H440V260H480V180H520V280H560V220H600V140H640V240H680V100H720V260H760V180H800V240H840V120H880V220H920V160H960V240H1000V100H1040V260H1080V180H1120V280H1160V220H1200V140H1240V240H1280V100H1320V260H1360V180H1400V240H1440V320H0Z" opacity="0.4"></path>
-<path d="M0 320V260H60V290H120V220H180V270H240V190H300V250H360V140H420V240H480V180H540V260H600V210H660V130H720V230H780V160H840V250H900V110H960V260H1020V190H1080V280H1140V220H1200V150H1260V240H1320V120H1380V270H1440V320H0Z" fill="#050314"></path>
-</svg>
-</div>
 </section>
 
 <!-- Catalog Section -->
@@ -179,28 +173,17 @@ Explore Collection
 
 </section>
 
-<!-- Featured Banner -->
-<section class="py-24 relative overflow-hidden">
-<div class="max-w-container-max mx-auto px-margin-mobile">
-<div class="glass-card bg-surface-container/50 backdrop-blur-2xl rounded-[2rem] overflow-hidden flex flex-col md:flex-row items-center border border-white/5">
-<div class="p-12 md:w-1/2 space-y-8 z-10">
-<span class="font-label-sm text-label-sm text-primary uppercase tracking-[0.4em]">Limited Edition</span>
-<h2 class="font-display-lg text-4xl md:text-5xl text-on-surface leading-tight">Perfume of <br/> the Month</h2>
-<p class="font-body-md text-on-surface-variant max-w-md">Experience the ethereal essence of Midnight Muse. A complex symphony of dark florals and ancient woods, crafted for those who embrace the mystery of the night.</p>
-<button id="featuredBtn" class="bg-primary text-on-primary px-10 py-5 rounded-full font-title-md uppercase tracking-widest text-sm inline-flex items-center gap-3 hover:opacity-90 transition-opacity">
-Discover More
-</button>
-</div>
-<div class="md:w-1/2 relative min-h-[500px] w-full flex items-center justify-center p-12 overflow-hidden bg-primary-container">
-<div class="absolute inset-0 bg-[#5B2EFF]/20 blur-[120px] scale-150"></div>
-<img alt="Perfume of the month" class="relative z-10 h-[400px] object-contain drop-shadow-2xl floating" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxkPdylvnCFZy8jVuCL4iclP9v6z97gTDgwytvpXyC_yAcDabBQHZDG8hlXCBcDhU_oPmxIdpkOsQVnYVPFGxXswbOMuRZPvZvGWN1e2QPd9UeWih237RxOZ05PfNTwbfUKw4sKhwj5k2kQ41E_Axoi6McIO_rnmDAiKL2sZpYJvsViuuWJv4JNptlEyhswDxMwAjTlXrBSL6V5badNeK3XHlo9rHSik6DQ4rRTgV8iXMcobBExaNNCNe5EjmbivArmbCWjEXSPhQ"/>
-</div>
-</div>
+<!-- Promotions Carousel — populated from the dashboard's Precios tab -->
+<section id="promoCarousel" class="hidden promo-carousel-bg py-12 md:py-16 px-margin-mobile relative overflow-hidden text-center">
+<div class="max-w-4xl mx-auto relative z-10">
+<span class="font-label-sm text-label-sm uppercase tracking-[0.5em] text-primary/80 block mb-8">Promociones</span>
+<div id="promoCarouselTrack" class="relative min-h-[110px] md:min-h-[170px] flex items-center justify-center"></div>
+<div id="promoCarouselDots" class="flex justify-center gap-2 mt-10"></div>
 </div>
 </section>
 
 <!-- Contact Section -->
-<section id="contacto" class="py-24 px-margin-mobile max-w-container-max mx-auto text-center">
+<section id="contacto" class="py-10 md:py-16 px-margin-mobile max-w-container-max mx-auto text-center">
 <span class="font-label-sm text-label-sm text-primary uppercase tracking-[0.4em]">Contacto</span>
 <h2 class="font-display-lg text-4xl md:text-5xl text-on-surface mt-4 mb-6">Hablemos</h2>
 <p class="font-body-md text-on-surface-variant max-w-xl mx-auto mb-10">¿Tenés dudas sobre nuestras fragancias? Escribinos y te respondemos a la brevedad.</p>
