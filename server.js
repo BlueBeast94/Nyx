@@ -741,8 +741,24 @@ ensurePerfumesBucket().catch((err) => console.error("Could not verify/create Sup
 // Vercel imports this file as a serverless function handler — it must not call app.listen() there.
 if (!process.env.VERCEL) {
     const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
         console.log(`NYX server running at http://localhost:${PORT}`);
+    });
+    // Without this, a bind failure (almost always "port already in use" — e.g. an old
+    // `node server.js`/`npm start` from a previous run still holding the port) is an
+    // unhandled 'error' event, which Node treats as an uncaught exception and silently
+    // kills the process right after it appears to start.
+    server.on("error", (err) => {
+        if (err.code === "EADDRINUSE") {
+            console.error(
+                `\nPort ${PORT} is already in use — that's almost certainly another "node server.js" ` +
+                `or "npm start" still running from before. Close that terminal (or run ` +
+                `"taskkill /F /IM node.exe" to stop every Node process) and try again.\n`
+            );
+        } else {
+            console.error("Failed to start server:", err.message);
+        }
+        process.exit(1);
     });
 }
 

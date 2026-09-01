@@ -14,54 +14,58 @@
             darkMode: "class",
             theme: {
                 extend: {
+                    // Every value routes through a CSS custom property (defined in
+                    // style.css under :root for dark / body.light-mode for light)
+                    // instead of a hardcoded hex, so toggling .light-mode re-themes
+                    // every element using these tokens at once.
                     colors: {
-                        "on-tertiary-fixed-variant": "#4b3f72",
-                        "surface-container-highest": "#363435",
-                        "on-error": "#690005",
-                        "surface-dim": "#141314",
-                        "outline-variant": "#48464b",
-                        "surface-container-lowest": "#0e0e0f",
-                        "outline": "#938f95",
-                        "on-tertiary-fixed": "#1f1244",
-                        "on-secondary-fixed": "#1c1830",
-                        "on-primary": "#312f38",
-                        "surface-bright": "#3a3939",
-                        "on-secondary": "#312d47",
-                        "secondary-fixed-dim": "#c9c2e3",
-                        "on-tertiary": "#34285a",
-                        "surface": "#141314",
-                        "tertiary": "#cdbefb",
-                        "surface-container": "#201f20",
-                        "tertiary-fixed-dim": "#cdbefb",
-                        "secondary-fixed": "#e6deff",
-                        "primary": "#c9c5cf",
-                        "on-primary-fixed": "#1c1b22",
-                        "error-container": "#93000a",
-                        "surface-variant": "#363435",
-                        "secondary": "#c9c2e3",
-                        "surface-container-high": "#2b2a2a",
-                        "on-tertiary-container": "#7e71a8",
-                        "on-primary-fixed-variant": "#48454e",
-                        "background": "#141314",
-                        "on-background": "#e5e1e2",
-                        "primary-container": "#09080f",
-                        "on-surface": "#e5e1e2",
-                        "surface-container-low": "#1c1b1c",
-                        "primary-fixed-dim": "#c9c5cf",
-                        "on-primary-container": "#7a7781",
-                        "on-surface-variant": "#c9c5cb",
-                        "on-secondary-container": "#b8b1d1",
-                        "primary-fixed": "#e5e0ec",
-                        "on-secondary-fixed-variant": "#48435e",
-                        "surface-tint": "#c9c5cf",
-                        "inverse-on-surface": "#313031",
-                        "inverse-primary": "#605d66",
-                        "tertiary-container": "#0c002d",
-                        "tertiary-fixed": "#e8ddff",
-                        "secondary-container": "#48435e",
-                        "inverse-surface": "#e5e1e2",
-                        "error": "#ffb4ab",
-                        "on-error-container": "#ffdad6"
+                        "on-tertiary-fixed-variant": "var(--nyx-on-tertiary-fixed-variant)",
+                        "surface-container-highest": "var(--nyx-surface-container-highest)",
+                        "on-error": "var(--nyx-on-error)",
+                        "surface-dim": "var(--nyx-surface-dim)",
+                        "outline-variant": "var(--nyx-outline-variant)",
+                        "surface-container-lowest": "var(--nyx-surface-container-lowest)",
+                        "outline": "var(--nyx-outline)",
+                        "on-tertiary-fixed": "var(--nyx-on-tertiary-fixed)",
+                        "on-secondary-fixed": "var(--nyx-on-secondary-fixed)",
+                        "on-primary": "var(--nyx-on-primary)",
+                        "surface-bright": "var(--nyx-surface-bright)",
+                        "on-secondary": "var(--nyx-on-secondary)",
+                        "secondary-fixed-dim": "var(--nyx-secondary-fixed-dim)",
+                        "on-tertiary": "var(--nyx-on-tertiary)",
+                        "surface": "var(--nyx-surface)",
+                        "tertiary": "var(--nyx-tertiary)",
+                        "surface-container": "var(--nyx-surface-container)",
+                        "tertiary-fixed-dim": "var(--nyx-tertiary-fixed-dim)",
+                        "secondary-fixed": "var(--nyx-secondary-fixed)",
+                        "primary": "var(--nyx-primary)",
+                        "on-primary-fixed": "var(--nyx-on-primary-fixed)",
+                        "error-container": "var(--nyx-error-container)",
+                        "surface-variant": "var(--nyx-surface-variant)",
+                        "secondary": "var(--nyx-secondary)",
+                        "surface-container-high": "var(--nyx-surface-container-high)",
+                        "on-tertiary-container": "var(--nyx-on-tertiary-container)",
+                        "on-primary-fixed-variant": "var(--nyx-on-primary-fixed-variant)",
+                        "background": "var(--nyx-background)",
+                        "on-background": "var(--nyx-on-background)",
+                        "primary-container": "var(--nyx-primary-container)",
+                        "on-surface": "var(--nyx-on-surface)",
+                        "surface-container-low": "var(--nyx-surface-container-low)",
+                        "primary-fixed-dim": "var(--nyx-primary-fixed-dim)",
+                        "on-primary-container": "var(--nyx-on-primary-container)",
+                        "on-surface-variant": "var(--nyx-on-surface-variant)",
+                        "on-secondary-container": "var(--nyx-on-secondary-container)",
+                        "primary-fixed": "var(--nyx-primary-fixed)",
+                        "on-secondary-fixed-variant": "var(--nyx-on-secondary-fixed-variant)",
+                        "surface-tint": "var(--nyx-surface-tint)",
+                        "inverse-on-surface": "var(--nyx-inverse-on-surface)",
+                        "inverse-primary": "var(--nyx-inverse-primary)",
+                        "tertiary-container": "var(--nyx-tertiary-container)",
+                        "tertiary-fixed": "var(--nyx-tertiary-fixed)",
+                        "secondary-container": "var(--nyx-secondary-container)",
+                        "inverse-surface": "var(--nyx-inverse-surface)",
+                        "error": "var(--nyx-error)",
+                        "on-error-container": "var(--nyx-on-error-container)"
                     },
                     borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px" },
                     spacing: { gutter: "24px", "margin-desktop": "80px", unit: "8px", "container-max": "1440px", "margin-mobile": "20px" },
@@ -97,10 +101,16 @@
 <button class="text-on-surface p-2" id="menuBtn">
 <span class="material-symbols-outlined">menu</span>
 </button>
+<div class="flex items-center gap-1">
+<button class="text-on-surface p-2 theme-toggle-btn" id="themeToggleBtn" aria-label="Cambiar a modo claro">
+<span class="material-symbols-outlined theme-icon theme-icon-light">light_mode</span>
+<span class="material-symbols-outlined theme-icon theme-icon-dark">dark_mode</span>
+</button>
 <a href="cart.html" class="text-on-surface p-2 relative inline-flex">
 <span class="material-symbols-outlined">shopping_bag</span>
 <span id="cartBadge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-purple-500 text-white text-[10px] font-bold rounded-full">0</span>
 </a>
+</div>
 </nav>
 </header>
 
@@ -121,6 +131,9 @@
 
 <!-- Hero Section -->
 <section class="hero-gradient min-h-screen flex flex-col justify-center items-center text-center px-margin-mobile pt-32 pb-40 overflow-hidden relative">
+<div class="hero-bg-layer hero-bg-night z-0"></div>
+<div class="hero-bg-layer hero-bg-day z-0"></div>
+<div class="hero-fade-overlay absolute inset-0 z-0"></div>
 <div class="absolute inset-0 z-0" id="starField"></div>
 
 <div class="absolute top-32 right-12 md:right-32 z-10 crescent-moon">
@@ -131,17 +144,17 @@
 
 <div class="relative z-20 max-w-4xl mx-auto">
 <div class="mb-12">
-<h1 class="font-display-lg text-[80px] md:text-[140px] text-white leading-none tracking-tighter mb-4 select-none opacity-90">NYX</h1>
+<h1 class="hero-title font-display-lg text-[80px] md:text-[140px] text-white leading-none tracking-tighter mb-4 select-none opacity-90">NYX</h1>
 <span class="font-label-sm text-label-sm uppercase tracking-[0.6em] text-primary/80 block">Artisanal Nocturnal Essences</span>
 </div>
 <div class="space-y-8">
 <h2 class="font-display-lg text-headline-lg-mobile md:text-5xl text-on-surface max-w-2xl mx-auto leading-tight">
 Discover Your <br/> Signature Fragrance
 </h2>
-<p class="font-body-md text-body-md text-white/70 max-w-xl mx-auto font-light">
+<p class="hero-subtitle font-body-md text-body-md text-white/70 max-w-xl mx-auto font-light">
 Explore our exclusive perfume collection inspired by elegance, personality and unforgettable moments under the starlit sky.
 </p>
-<button id="exploreBtn" class="bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/20 transition-all px-12 py-5 rounded-full font-title-md text-white uppercase tracking-widest text-sm inline-flex items-center gap-3 mx-auto mt-12">
+<button id="exploreBtn" class="hero-explore-btn bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/20 transition-all px-12 py-5 rounded-full font-title-md text-white uppercase tracking-widest text-sm inline-flex items-center gap-3 mx-auto mt-12">
 Explore Collection
 <span class="material-symbols-outlined text-sm">arrow_forward</span>
 </button>

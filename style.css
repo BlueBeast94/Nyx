@@ -24,6 +24,118 @@ body {
        actually-visible visual viewport (address bar height, on-screen keyboard, etc.),
        so bottom-pinned fixed elements don't jump when that gap changes mid-scroll. */
     --mobile-viewport-offset: 0px;
+
+    /* ===== Theme tokens (dark — the site's default) =====
+       Fed into tailwind.config's colors as var(--nyx-*) (see index.html), so every
+       bg-*/text-*/border-* utility using these names re-themes automatically when
+       body.light-mode overrides them below — no per-element edits needed. */
+    --nyx-on-tertiary-fixed-variant: #4b3f72;
+    --nyx-surface-container-highest: #363435;
+    --nyx-on-error: #690005;
+    --nyx-surface-dim: #141314;
+    --nyx-outline-variant: #48464b;
+    --nyx-surface-container-lowest: #0e0e0f;
+    --nyx-outline: #938f95;
+    --nyx-on-tertiary-fixed: #1f1244;
+    --nyx-on-secondary-fixed: #1c1830;
+    --nyx-on-primary: #312f38;
+    --nyx-surface-bright: #3a3939;
+    --nyx-on-secondary: #312d47;
+    --nyx-secondary-fixed-dim: #c9c2e3;
+    --nyx-on-tertiary: #34285a;
+    --nyx-surface: #141314;
+    --nyx-tertiary: #cdbefb;
+    --nyx-surface-container: #201f20;
+    --nyx-tertiary-fixed-dim: #cdbefb;
+    --nyx-secondary-fixed: #e6deff;
+    --nyx-primary: #c9c5cf;
+    --nyx-on-primary-fixed: #1c1b22;
+    --nyx-error-container: #93000a;
+    --nyx-surface-variant: #363435;
+    --nyx-secondary: #c9c2e3;
+    --nyx-surface-container-high: #2b2a2a;
+    --nyx-on-tertiary-container: #7e71a8;
+    --nyx-on-primary-fixed-variant: #48454e;
+    --nyx-background: #141314;
+    --nyx-on-background: #e5e1e2;
+    --nyx-primary-container: #09080f;
+    --nyx-on-surface: #e5e1e2;
+    --nyx-surface-container-low: #1c1b1c;
+    --nyx-primary-fixed-dim: #c9c5cf;
+    --nyx-on-primary-container: #7a7781;
+    --nyx-on-surface-variant: #c9c5cb;
+    --nyx-on-secondary-container: #b8b1d1;
+    --nyx-primary-fixed: #e5e0ec;
+    --nyx-on-secondary-fixed-variant: #48435e;
+    --nyx-surface-tint: #c9c5cf;
+    --nyx-inverse-on-surface: #313031;
+    --nyx-inverse-primary: #605d66;
+    --nyx-tertiary-container: #0c002d;
+    --nyx-tertiary-fixed: #e8ddff;
+    --nyx-secondary-container: #48435e;
+    --nyx-inverse-surface: #e5e1e2;
+    --nyx-error: #ffb4ab;
+    --nyx-on-error-container: #ffdad6;
+}
+
+/* ===== Theme tokens (light) — everything the same tokens resolve to once the
+   toggle button adds .light-mode to <body>. Dark purple text on a whitish surface,
+   matching the brand's existing lavender-purple accent. ===== */
+body.light-mode {
+    --nyx-background: #fbf8fd;
+    --nyx-on-background: #1f1244;
+    --nyx-surface: #ffffff;
+    --nyx-surface-dim: #ded4ea;
+    --nyx-surface-bright: #fffbff;
+    --nyx-surface-container-lowest: #ffffff;
+    --nyx-surface-container-low: #f8f3fb;
+    --nyx-surface-container: #f2ecf9;
+    --nyx-surface-container-high: #ece4f6;
+    --nyx-surface-container-highest: #e5dbf2;
+    --nyx-surface-variant: #e6e0e9;
+    --nyx-on-surface: #1f1244;
+    --nyx-on-surface-variant: #4a4458;
+    --nyx-outline: #7a7488;
+    --nyx-outline-variant: #cac4d3;
+    --nyx-primary: #6750a4;
+    --nyx-on-primary: #ffffff;
+    --nyx-primary-container: #e9ddff;
+    --nyx-on-primary-container: #22005d;
+    --nyx-primary-fixed: #e9ddff;
+    --nyx-on-primary-fixed: #22005d;
+    --nyx-primary-fixed-dim: #cdbefb;
+    --nyx-on-primary-fixed-variant: #4f378a;
+    --nyx-secondary: #625b71;
+    --nyx-on-secondary: #ffffff;
+    --nyx-secondary-container: #e8def8;
+    --nyx-on-secondary-container: #1e192b;
+    --nyx-secondary-fixed: #e8def8;
+    --nyx-on-secondary-fixed: #1e192b;
+    --nyx-secondary-fixed-dim: #ccc2dc;
+    --nyx-on-secondary-fixed-variant: #4a4458;
+    --nyx-tertiary: #7c5cdb;
+    --nyx-on-tertiary: #ffffff;
+    --nyx-tertiary-container: #f0e6ff;
+    --nyx-on-tertiary-container: #2a1a5e;
+    --nyx-tertiary-fixed: #f0e6ff;
+    --nyx-on-tertiary-fixed: #2a1a5e;
+    --nyx-tertiary-fixed-dim: #cdbefb;
+    --nyx-on-tertiary-fixed-variant: #4b3f72;
+    --nyx-error: #ba1a1a;
+    --nyx-on-error: #ffffff;
+    --nyx-error-container: #ffdad6;
+    --nyx-on-error-container: #410002;
+    --nyx-surface-tint: #6750a4;
+    --nyx-inverse-surface: #322f35;
+    --nyx-inverse-on-surface: #f5eff7;
+    --nyx-inverse-primary: #cdbefb;
+}
+
+/* Smoothly fades colors/backgrounds/borders when the theme toggle flips
+   body.light-mode — components with their own hover/interaction transitions (more
+   specific selectors) keep taking priority over this fallback. */
+* {
+    transition: background-color 0.6s ease, color 0.6s ease, border-color 0.6s ease;
 }
 
 /* ===== Chat Widget ===== */
@@ -388,19 +500,305 @@ body {
 }
 
 .hero-gradient {
-    /* Layered so it degrades gracefully: a tint over the image (readable text up top,
-       fading to a solid match of the page background at the bottom so the photo blends
-       into the section below instead of cutting off hard), then the custom background
-       image, then the original solid gradient as a fallback if that file is ever
-       missing (a missing background-image layer is simply transparent, so the gradient
-       shows through). */
-    background-image:
-        linear-gradient(180deg, rgba(2, 1, 17, 0.5) 0%, rgba(12, 8, 54, 0.3) 30%, rgba(82, 45, 109, 0.2) 55%, rgba(20, 19, 20, 0.75) 85%, #141314 100%),
-        url("hero-bg.png"),
-        linear-gradient(180deg, #020111 0%, #0c0836 40%, #522d6d 75%, #cc7a52 100%);
-    background-size: cover, cover, cover;
-    background-position: center, center, center;
-    background-repeat: no-repeat, no-repeat, no-repeat;
+    /* The actual photo lives in the two .hero-bg-layer divs, and its readability tint
+       lives in .hero-fade-overlay (a separate layer painted *above* the photo — see
+       below). This is just the solid fallback gradient, shown only while those photos
+       are loading or if they're ever missing. */
+    background-image: linear-gradient(180deg, #020111 0%, #0c0836 40%, #522d6d 75%, #cc7a52 100%);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+body.light-mode .hero-gradient {
+    background-image: linear-gradient(180deg, #e9ddff 0%, #cdbefb 40%, #f0e6ff 75%, #fbf8fd 100%);
+}
+
+/* Sits *above* the night/day photo layers (unlike a section's own background, which
+   paints below all of its children) — this is what actually gives the readability
+   tint up top and fades the photo into the page's background color at the bottom. */
+.hero-fade-overlay {
+    background-image: linear-gradient(180deg, rgba(2, 1, 17, 0.5) 0%, rgba(12, 8, 54, 0.3) 30%, rgba(82, 45, 109, 0.2) 55%, rgba(20, 19, 20, 0.75) 85%, #141314 100%);
+    pointer-events: none;
+}
+body.light-mode .hero-fade-overlay {
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.15) 30%, rgba(255, 255, 255, 0.04) 65%, rgba(251, 248, 253, 0.55) 90%, #fbf8fd 100%);
+}
+
+/* Hero text/button use raw white utilities (readable on the night photo by default),
+   so they need explicit light-mode overrides — the CSS-variable token swap above only
+   covers elements using the semantic on-surface/primary/etc. classes. */
+body.light-mode .hero-title,
+body.light-mode .hero-subtitle {
+    color: #1f1244;
+}
+body.light-mode .hero-explore-btn {
+    background: rgba(31, 18, 68, 0.06);
+    border-color: rgba(31, 18, 68, 0.25);
+    color: #1f1244;
+}
+body.light-mode .hero-explore-btn:hover {
+    background: rgba(31, 18, 68, 0.12);
+}
+
+body.light-mode .category-pill {
+    border-color: rgba(31, 18, 68, 0.15);
+    color: #4a4458;
+}
+body.light-mode .category-pill:hover {
+    border-color: rgba(31, 18, 68, 0.35);
+}
+body.light-mode .category-pill.active {
+    border-color: #6750a4;
+    color: #6750a4;
+    background: rgba(103, 80, 164, 0.08);
+}
+
+body.light-mode #searchInput {
+    border-bottom-color: rgba(31, 18, 68, 0.15);
+}
+
+/* Stock/gender badges use pale colors tuned for a dark card — need real contrast
+   against a white one. Background stays a light tint, text goes much darker. */
+body.light-mode .stock-badge.in-stock { background: rgba(34, 139, 84, 0.15); color: #1b6b3f; }
+body.light-mode .stock-badge.low-stock { background: rgba(184, 124, 20, 0.15); color: #8a5b0a; }
+body.light-mode .stock-badge.out-of-stock { background: rgba(186, 26, 26, 0.14); color: #8a1c1c; }
+
+body.light-mode .text-blue-200 { color: #1e4fb8; }
+body.light-mode .text-pink-200 { color: #ad1a63; }
+body.light-mode .text-purple-200 { color: #6a2fb0; }
+
+/* Floating chat/WhatsApp buttons — nearly-transparent white on white is invisible;
+   give them the brand purple so they read like the rest of the accent text. Hover
+   states already work fine in both themes (solid purple/green), untouched here. */
+body.light-mode .chat-widget-btn {
+    background: rgba(103, 80, 164, 0.08);
+    border-color: rgba(103, 80, 164, 0.35);
+    color: #6750a4;
+}
+
+/* Chat panel — hardcoded dark background/text throughout, never adapted. */
+body.light-mode .chat-widget-panel {
+    background: #ffffff;
+    border-color: rgba(31, 18, 68, 0.1);
+}
+body.light-mode .chat-widget-header {
+    border-bottom-color: rgba(31, 18, 68, 0.1);
+}
+body.light-mode .chat-widget-title {
+    color: #1f1244;
+}
+body.light-mode .chat-widget-header button {
+    color: #4a4458;
+}
+body.light-mode .chat-msg.bot {
+    background: rgba(31, 18, 68, 0.05);
+    color: #1f1244;
+}
+body.light-mode .chat-msg.user {
+    background: #6750a4;
+    color: #ffffff;
+}
+body.light-mode .chat-widget-input-area {
+    border-top-color: rgba(31, 18, 68, 0.1);
+}
+body.light-mode .chat-option-btn {
+    border-color: rgba(31, 18, 68, 0.15);
+    background: rgba(31, 18, 68, 0.03);
+    color: #1f1244;
+}
+body.light-mode .chat-option-btn:hover {
+    border-color: #6750a4;
+    background: rgba(103, 80, 164, 0.08);
+}
+body.light-mode .chat-name-form input {
+    background: rgba(31, 18, 68, 0.04);
+    border-color: rgba(31, 18, 68, 0.15);
+    color: #1f1244;
+}
+body.light-mode .chat-name-form input:focus {
+    border-color: #6750a4;
+}
+body.light-mode .chat-name-form button {
+    background: #6750a4;
+    color: #ffffff;
+}
+body.light-mode .chat-recommendation-item + .chat-recommendation-item {
+    border-top-color: rgba(31, 18, 68, 0.1);
+}
+body.light-mode .chat-perfume-name {
+    color: #6750a4;
+}
+body.light-mode .whatsapp-btn {
+    background: rgba(103, 80, 164, 0.08);
+    border-color: rgba(103, 80, 164, 0.35);
+}
+/* The icon is a single path with both fill AND stroke set to "white" inline in the
+   SVG markup — overriding only fill left a white outline traced around a purple
+   fill, which read as "backwards" (logo white, purple only peeking through). Both
+   need to flip together, in both the resting and hover (green) states. */
+body.light-mode .whatsapp-btn svg {
+    fill: #6750a4;
+    stroke: #6750a4;
+}
+body.light-mode .whatsapp-btn:hover {
+    background: #25d366;
+    border-color: #25d366;
+}
+body.light-mode .whatsapp-btn:hover svg {
+    fill: #ffffff;
+    stroke: #ffffff;
+}
+
+/* Nav drawer (hamburger menu) — hardcoded dark background/text, never adapted. */
+body.light-mode .drawer {
+    background: rgba(255, 255, 255, 0.98);
+    border-right-color: rgba(31, 18, 68, 0.1);
+}
+body.light-mode .drawer-close {
+    color: #1f1244;
+}
+body.light-mode .drawer-link {
+    color: #1f1244;
+}
+body.light-mode .drawer-link:hover {
+    color: #6750a4;
+}
+body.light-mode .drawer-login {
+    border-top-color: rgba(31, 18, 68, 0.12);
+    color: #6750a4;
+}
+
+/* Card add-to-cart icon button — same near-invisible white-on-white issue as the
+   modal button, just never caught because it's small. Filled solid so the icon
+   actually reads against the light card background. */
+body.light-mode .add-to-cart-btn {
+    background: #6750a4;
+    border-color: #6750a4;
+    color: #ffffff;
+}
+body.light-mode .add-to-cart-btn:hover {
+    background: #55407f;
+    border-color: #55407f;
+    color: #ffffff;
+}
+body.light-mode .add-to-cart-btn.in-cart {
+    background: #1b6b3f;
+    border-color: #1b6b3f;
+    color: #ffffff;
+}
+body.light-mode .add-to-cart-btn.in-cart:hover {
+    background: #b3261e;
+    border-color: #b3261e;
+    color: #ffffff;
+}
+
+/* Product detail modal — hardcoded dark background/border, never adapted. */
+body.light-mode .modal-content {
+    background: #ffffff;
+    border-color: rgba(31, 18, 68, 0.1);
+}
+/* A near-transparent outline (fine on a dark modal) all but disappears on white —
+   filled solid so it actually reads as a button. */
+body.light-mode .modal-cart-btn {
+    background: #6750a4;
+    border-color: #6750a4;
+    color: #ffffff;
+}
+body.light-mode .modal-cart-btn:hover {
+    background: #55407f;
+    border-color: #55407f;
+    color: #ffffff;
+}
+body.light-mode .modal-cart-btn.in-cart {
+    background: #1b6b3f;
+    border-color: #1b6b3f;
+    color: #ffffff;
+}
+body.light-mode .modal-cart-btn.in-cart:hover {
+    background: #b3261e;
+    border-color: #b3261e;
+    color: #ffffff;
+}
+
+/* Generic catch-all for the remaining faint white borders/fills used throughout the
+   page (footer, contact links, product cards, note-tag pills, the sold-out button) —
+   higher specificity than the plain Tailwind utility, so this wins without touching
+   every place that uses border-white/*, bg-white/* directly. */
+body.light-mode .border-white\/5 {
+    border-color: rgba(31, 18, 68, 0.08);
+}
+body.light-mode .border-white\/10 {
+    border-color: rgba(31, 18, 68, 0.14);
+}
+body.light-mode .border-white\/20 {
+    border-color: rgba(31, 18, 68, 0.22);
+}
+body.light-mode .bg-white\/5 {
+    background-color: rgba(31, 18, 68, 0.05);
+}
+body.light-mode .bg-white\/10 {
+    background-color: rgba(31, 18, 68, 0.08);
+}
+
+/* Night/day hero photos — stacked, absolutely positioned layers that crossfade via
+   opacity (the technique CSS needs, since background-image itself can't transition). */
+.hero-bg-layer {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transition: opacity 1.2s ease;
+}
+.hero-bg-night {
+    background-image: url("hero-night.png");
+    opacity: 1;
+}
+.hero-bg-day {
+    background-image: url("hero-day.png");
+    opacity: 0;
+}
+body.light-mode .hero-bg-night {
+    opacity: 0;
+}
+body.light-mode .hero-bg-day {
+    opacity: 1;
+}
+
+/* Theme toggle button — sun rotates/fades out as the moon rotates/fades in (and back),
+   plus a quick press-down bounce for tactile feedback on click. */
+.theme-toggle-btn {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease;
+}
+.theme-toggle-btn:active {
+    transform: scale(0.85);
+}
+.theme-icon {
+    position: absolute;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.theme-icon-light {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+.theme-icon-dark {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.4);
+}
+body.light-mode .theme-icon-light {
+    opacity: 0;
+    transform: rotate(90deg) scale(0.4);
+}
+body.light-mode .theme-icon-dark {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
 }
 
 /* Used further down the page (e.g. the promo carousel), where hero-gradient's warm
@@ -408,6 +806,9 @@ body {
    Fades back to that same background color (#141314) at both edges instead. */
 .promo-carousel-bg {
     background: linear-gradient(180deg, #141314 0%, #1c1140 35%, #2d1a4f 50%, #1c1140 65%, #141314 100%);
+}
+body.light-mode .promo-carousel-bg {
+    background: linear-gradient(180deg, #fbf8fd 0%, #ece4f6 35%, #e0d3f5 50%, #ece4f6 65%, #fbf8fd 100%);
 }
 
 .crescent-moon {
@@ -438,6 +839,9 @@ body {
     font-size: 28px;
     line-height: 1.3;
     color: #ffffff;
+}
+body.light-mode .promo-slide-text {
+    color: #1f1244;
 }
 @media (min-width: 768px) {
     .promo-slide-text {
@@ -475,6 +879,15 @@ body {
 .promo-dot.active {
     background: #cdbefb;
     transform: scale(1.3);
+}
+body.light-mode .promo-dot {
+    background: rgba(31, 18, 68, 0.2);
+}
+body.light-mode .promo-dot:hover {
+    background: rgba(31, 18, 68, 0.4);
+}
+body.light-mode .promo-dot.active {
+    background: #6750a4;
 }
 
 /* ===== Logo fallback ===== */

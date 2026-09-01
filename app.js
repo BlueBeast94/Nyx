@@ -183,6 +183,7 @@ const modalContent = document.getElementById("modalContent");
 const starField = document.getElementById("starField");
 const menuBtn = document.getElementById("menuBtn");
 const exploreBtn = document.getElementById("exploreBtn");
+const themeToggleBtn = document.getElementById("themeToggleBtn");
 const drawer = document.getElementById("drawer");
 const drawerOverlay = document.getElementById("drawerOverlay");
 const closeDrawer = document.getElementById("closeDrawer");
@@ -456,6 +457,33 @@ searchInput.addEventListener("input", (e) => {
 // ===== Hero actions =====
 exploreBtn.addEventListener("click", () => {
     document.getElementById("collection").scrollIntoView({ behavior: "smooth" });
+});
+
+// ===== Light mode toggle — crossfades the hero photo between night/day; the rest of
+// the site stays on its usual dark theme, this only swaps the hero background. =====
+function applyTheme(isLight) {
+    // The sun/moon swap itself is pure CSS (.theme-icon-light/.theme-icon-dark rotate
+    // and crossfade based on this class) — this just flips the state.
+    document.body.classList.toggle("light-mode", isLight);
+    themeToggleBtn.setAttribute("aria-label", isLight ? "Cambiar a modo oscuro" : "Cambiar a modo claro");
+}
+
+let savedTheme = null;
+try {
+    savedTheme = localStorage.getItem("nyxTheme");
+} catch (err) {
+    console.error("Failed to read saved theme:", err);
+}
+applyTheme(savedTheme === "light");
+
+themeToggleBtn.addEventListener("click", () => {
+    const isLight = !document.body.classList.contains("light-mode");
+    applyTheme(isLight);
+    try {
+        localStorage.setItem("nyxTheme", isLight ? "light" : "dark");
+    } catch (err) {
+        console.error("Failed to save theme:", err);
+    }
 });
 
 // ===== Nav Drawer =====
