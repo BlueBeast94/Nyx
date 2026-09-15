@@ -813,6 +813,14 @@ body.light-mode .promo-carousel-bg {
 
 .crescent-moon {
     filter: drop-shadow(0 0 10px rgba(255, 235, 153, 0.4));
+    opacity: 1;
+    transition: opacity 0.6s ease;
+}
+/* A glowing night-sky moon over the daytime hero photo reads as a mistake — hide it
+   once the day image is showing. */
+body.light-mode .crescent-moon {
+    opacity: 0;
+    pointer-events: none;
 }
 
 /* ===== Promotions Carousel ===== */
