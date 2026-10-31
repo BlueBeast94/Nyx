@@ -143,13 +143,79 @@ function formatPrice(n) {
     return `$${Number(n).toFixed(2)}`;
 }
 
-// Formats the current in-stock catalog (with price/discount info) plus any active
-// store-wide promotions into plain text for the AI's system prompt.
-async function buildCatalogContext() {
-    const { data: perfumes, error } = await supabaseAdmin
-        .from("perfumes")
-        .select("brand, model, gender, notes_top, notes_middle, notes_base, description, stock_quantity, price, discount_percent")
-        .gte("stock_quantity", 1);
+// The whole in-stock catalog (~500 perfumes) is ~22k tokens — far over Groq's 8k tokens-per-minute
+// limit on the free tier — so only the perfumes most relevant to the customer's message go in the prompt.
+const MAX_PERFUMES_IN_PROMPT = 25;
+
+const normalizeText = (s) =>
+    (s || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "");
+
+// Step 1: asks Groq to turn the customer's message into search terms (gender + notes/brands/models),
+// translating vague words like "dulce" or "fresco" into the actual notes that appear in the catalog.
+async function extractSearchTerms(text) {
+    try {
+        const raw = await callGroq(
+            [
+                {
+                    role: "system",
+                    content:
+                        "Analizás mensajes de clientes de una perfumería y devolvés términos para buscar en el catálogo. " +
+                        'Respondé solo con JSON: {"genero": "masculino" | "femenino" | "unisex" | null, "palabras": [...]}. ' +
+                        "En \"palabras\" poné entre 5 y 15 términos cortos en español, en minúscula: marcas o modelos que mencione, " +
+                        "y notas olfativas concretas como aparecen en fichas de perfumes (ej: vainilla, haba tonka, bergamota, lavanda, " +
+                        "cuero, oud, ámbar, jazmín, notas marinas). Traducí lo que pida a notas: si dice \"dulce\" incluí vainilla, " +
+                        "caramelo, praliné, haba tonka; si dice \"fresco\" incluí bergamota, limón, menta, notas marinas. " +
+                        "Incluí también el adjetivo que use (dulce, fresca, amaderada...). genero es null si no lo especifica."
+                },
+                { role: "user", content: text }
+            ],
+            { json: true }
+        );
+        const parsed = JSON.parse(raw);
+        return {
+            gender: ["masculino", "femenino", "unisex"].includes(parsed.genero) ? parsed.genero : null,
+            keywords: (Array.isArray(parsed.palabras) ? parsed.palabras : [])
+                .filter((k) => typeof k === "string" && k.trim().length >= 3)
+                .map((k) => normalizeText(k.trim()))
+        };
+    } catch (err) {
+        // Without search terms we still answer, just from a less targeted selection.
+        console.error("extractSearchTerms error:", err.message);
+        return { gender: null, keywords: [] };
+    }
+}
+
+// Step 2: scores every in-stock perfume against the search terms — a match in the brand, model or notes
+// counts double vs. one in the description — and keeps the best ones. Ties are shuffled so a vague
+// question doesn't always surface the same perfumes.
+function pickRelevantPerfumes(perfumes, { gender, keywords }) {
+    const pool = gender ? perfumes.filter((p) => !p.gender || p.gender === gender || p.gender === "unisex") : perfumes;
+
+    return pool
+        .map((p) => {
+            const strong = normalizeText([p.brand, p.model, p.notes_top, p.notes_middle, p.notes_base].join(" "));
+            const weak = normalizeText(p.description);
+            const score = keywords.reduce((sum, k) => sum + (strong.includes(k) ? 2 : weak.includes(k) ? 1 : 0), 0);
+            return { p, score, tiebreak: Math.random() };
+        })
+        .sort((a, b) => b.score - a.score || a.tiebreak - b.tiebreak)
+        .slice(0, MAX_PERFUMES_IN_PROMPT)
+        .map(({ p }) => p);
+}
+
+// Formats the in-stock perfumes most relevant to the customer's message (with price/discount info)
+// plus any active store-wide promotions into plain text for the AI's system prompt.
+async function buildCatalogContext(customerText) {
+    const [{ data: allPerfumes, error }, searchTerms] = await Promise.all([
+        supabaseAdmin
+            .from("perfumes")
+            .select("brand, model, gender, notes_top, notes_middle, notes_base, description, stock_quantity, price, discount_percent")
+            .gte("stock_quantity", 1),
+        extractSearchTerms(customerText)
+    ]);
 
     if (error) {
         console.error("buildCatalogContext query error:", error.message);
@@ -162,9 +228,12 @@ async function buildCatalogContext() {
             ? `Promociones activas en la tienda:\n${promotions.map((p) => `- ${p.text}`).join("\n")}\n\n`
             : "";
 
-    if (!perfumes || perfumes.length === 0) {
+    if (!allPerfumes || allPerfumes.length === 0) {
         return `${promoLine}No hay perfumes en stock actualmente.`;
     }
+
+    const perfumes = pickRelevantPerfumes(allPerfumes, searchTerms);
+    const selectionLine = `(Selección de los ${perfumes.length} perfumes más relevantes para esta consulta, de ${allPerfumes.length} en stock.)\n`;
 
     const catalog = perfumes
         .map((p) => {
@@ -183,7 +252,7 @@ async function buildCatalogContext() {
         })
         .join("\n");
 
-    return `${promoLine}${catalog}`;
+    return `${promoLine}${selectionLine}${catalog}`;
 }
 
 // Groq's API is OpenAI-compatible — same request/response shape as the OpenAI chat completions endpoint.
@@ -192,7 +261,9 @@ async function buildCatalogContext() {
 // that burns completion tokens without ever being shown to the user — up to 45 tokens of reasoning
 // for a one-word reply in testing); reasoning_effort: "low" is the minimum Groq allows and cuts that
 // down to ~14 tokens while keeping answer quality about the same.
-async function callGroq(messages) {
+// On a 429 (per-minute token limit) Groq says how long to wait; if it's short, wait and retry once
+// so a customer who writes right after someone else gets an answer instead of an error.
+async function callGroq(messages, { json = false, retried = false } = {}) {
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -204,9 +275,16 @@ async function callGroq(messages) {
             messages,
             temperature: 0.6,
             max_tokens: 400,
-            reasoning_effort: "low"
+            reasoning_effort: "low",
+            ...(json && { response_format: { type: "json_object" } })
         })
     });
+
+    const retryAfter = Number(res.headers.get("retry-after"));
+    if (res.status === 429 && !retried && retryAfter > 0 && retryAfter <= 15) {
+        await new Promise((resolve) => setTimeout(resolve, retryAfter * 1000));
+        return callGroq(messages, { json, retried: true });
+    }
 
     if (!res.ok) {
         const errText = await res.text();
@@ -677,11 +755,12 @@ app.post("/api/chat", async (req, res) => {
     }
 
     try {
-        const catalogContext = await buildCatalogContext();
+        const catalogContext = await buildCatalogContext(message);
         const systemPrompt =
             "Sos el asistente virtual de NYX, una tienda de perfumes. Respondé en español, de forma breve y amable. " +
             "Solo podés hablar de los perfumes que aparecen en la siguiente lista de stock actual — no inventes perfumes que no estén ahí. " +
             "Si preguntan por algo que no está en la lista, decilo honestamente y sugerí algo similar de la lista si existe. " +
+            "Si piden una recomendación, sugerí entre 3 y 5 perfumes de la lista que mejor encajen con lo que pidieron. " +
             "Si tu respuesta recomienda o menciona uno o más perfumes puntuales, listalos cada uno en su propia línea " +
             "empezando con '- ', con el nombre (marca + modelo) entre doble asterisco, seguido de una razón breve. " +
             "Ejemplo: '- **Al Wataniah Alal** — ideal si buscás algo unisex y frutal.' " +
@@ -712,8 +791,8 @@ app.post("/api/recommend", async (req, res) => {
     }
 
     try {
-        const catalogContext = await buildCatalogContext();
         const preferencesText = answers.map((a) => `${a.question} ${a.answer}`).join("\n");
+        const catalogContext = await buildCatalogContext(preferencesText);
 
         const systemPrompt =
             "Sos el asistente virtual de NYX, una tienda de perfumes. Basándote ÚNICAMENTE en la siguiente lista de stock actual, " +
